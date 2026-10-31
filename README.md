@@ -48,9 +48,12 @@ tests/         test_runner.tscn  자동 점검
 - 서하 노드는 텍스처 필터가 Linear입니다. 1배 크기로 쓰는 것을 기준으로 합니다.
 
 ## 맵 테스트
-- `scenes/dev/map_test.tscn`: 64px 타일 크기 확인용 임시 맵 (서하 방, 병동 복도, 중앙 복도 일부). F6으로 실행.
+- `scenes/dev/map_test.tscn`: 64px 타일 테스트 맵 (서하 방, 보호자실, 채린 방, 빈 병실, 병동 복도, 중앙 복도 일부). F6으로 실행.
   - 방향키 걷기 · T 시간대(아침/낮/저녁/밤) · Z 75% 확대/원래대로 · G 격자 · Esc 끝내기
-  - 그림은 임시 색 블록. 배치는 `map_test.gd` 맨 위 `LAYOUT` 문자열을 고치면 바로 바뀝니다.
+  - 바닥·벽은 `map_test.gd`의 `LAYOUT` 글자 배열, 가구는 `PROPS` 표를 고치면 바로 바뀝니다.
+  - 그림: `assets/art/tiles/interior.png`(64px 타일), `assets/art/props/interior/`(가구).
+    Gemini 원본은 `tools/sprite_cleanup/src/map/`, 정리는 `python3 tools/sprite_cleanup/build_interior.py`.
+    타일 시트는 Gemini 한 칸을 타일 2×2칸(128px)으로 씁니다. 벽 앞면은 3칸(몰딩/회벽/판벽) 높이입니다.
   - 맵 전체 설계는 '해무장 맵 설계서' 문서 참고.
 
 ## 아직 할 일

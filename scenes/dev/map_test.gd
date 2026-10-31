@@ -1,34 +1,40 @@
 # map_test.gd
-# 64px 타일 크기 확인용 테스트 맵: 서하 방 + 병동 복도 + 중앙 복도 일부.
-# 그림은 임시 색 블록이다. 배치는 아래 LAYOUT 문자열을 고치면 바로 바뀐다.
+# 64px 타일 테스트 맵: 서하 방 · 보호자실 · 채린 방 · 빈 병실 · 병동 복도 · 중앙 복도 일부.
+# 바닥·벽은 assets/art/tiles/interior.png, 가구는 assets/art/props/interior/ (Gemini 시트를 정리한 것).
+# 배치는 LAYOUT(바닥·벽)과 PROPS(가구) 표만 고치면 바로 바뀐다.
 #   방향키: 걷기   T: 시간대(아침/낮/저녁/밤)   Z: 화면 확대/축소   G: 격자 표시   Esc: 끝내기
 extends Node2D
 
 const TILE := 64
 const SPEED := 150.0
+const ATLAS := "res://assets/art/tiles/interior.png"
+const PROP_DIR := "res://assets/art/props/interior/"
 
-# 기호: # 벽 윗면  W 벽 앞면  w 창문  G 비상구 유리문  . 나무 바닥  , 복도 바닥  D 문
-#       b 침대(2칸 폭)  s 세면대  n 협탁  c 수납장
+# 기호: # 벽 윗면   W 벽 앞면(위에서부터 몰딩/회벽/판벽 순으로 자동)
+#       . 나무 마루  : 나무 마루(변형)  , 복도  ; 복도(낡은 변형)  L 로비  F 식당  D 문 자리(복도 바닥)
 const LAYOUT := [
 	"#######################",
-	"#WWWWWWWW#GGG#WWWWWWWW#",
-	"#WWwwwwWW#GGG#WWWwwWWW#",
-	"#bb.....s#,,,#bb....cc#",
-	"#bbn.....#,,,#bbn.....#",
-	"#bb......#,,,#bb......#",
-	"#........D,,,D........#",
-	"#........D,,,D........#",
-	"#........#,,,#........#",
+	"#WWWWWWWW#WWW#WWWWWWWW#",
+	"#WWWWWWWW#WWW#WWWWWWWW#",
+	"#WWWWWWWW#WWW#WWWWWWWW#",
+	"#........#,,,#::::::::#",
+	"#........#,,,#::::::::#",
+	"#........#,,,#::::::::#",
+	"#........D,,,D::::::::#",
+	"#........D,,,D::::::::#",
+	"#........#,,,#::::::::#",
 	"##########,,,##########",
 	"#WWWWWWWW#,,,#WWWWWWWW#",
-	"#WWwwwwWW#,,,#WWWWWWWW#",
-	"#bb......#,,,#........#",
-	"#bbn.....#,,,#........#",
-	"#bb......D,,,D........#",
-	"#........D,,,D........#",
-	"#.......s#,,,#........#",
-	"#........#,,,#........#",
+	"#WWWWWWWW#,,,#WWWWWWWW#",
+	"#WWWWWWWW#,,,#WWWWWWWW#",
+	"#........#,,,#::::::::#",
+	"#........#,,,#::::::::#",
+	"#........D,,,D::::::::#",
+	"#........D,,,D::::::::#",
+	"#........#,,,#::::::::#",
+	"#........#,,,#::::::::#",
 	"##########,,,##########",
+	"#WWWWWWWWW,,,WWWWWWWWW#",
 	"#WWWWWWWWW,,,WWWWWWWWW#",
 	"#WWWWWWWWW,,,WWWWWWWWW#",
 	"#,,,,,,,,,,,,,,,,,,,,,#",
@@ -37,42 +43,48 @@ const LAYOUT := [
 	"#######################",
 ]
 
-# 방 이름표 (타일 좌표)
-const LABELS := {
-	"서하 방": Vector2(5, 8.4), "보호자실": Vector2(18, 8.4),
-	"채린 방": Vector2(5, 17.4), "빈 병실": Vector2(18, 17.4),
-	"비상구": Vector2(11.5, 1.2), "중앙 복도": Vector2(16, 23.4),
+# 바닥 기호 → 아틀라스의 2×2 블록 왼쪽 위 (타일 단위)
+const FLOORS := {
+	".": Vector2i(0, 0), ":": Vector2i(2, 0), ",": Vector2i(4, 0), ";": Vector2i(6, 0),
+	"L": Vector2i(0, 2), "F": Vector2i(2, 2), "D": Vector2i(4, 0),
 }
+const WALL_FACE := Vector2i(4, 2)   # 2칸 폭 × 3칸 높이
+const WALL_TOP := Vector2i(6, 2)
 
-# 기호 → (아틀라스 칸, 막힘 여부)
-const TILES := {
-	"#": [0, true], "W": [1, true], "w": [2, true], ".": [3, false], ",": [4, false],
-	"D": [5, false], "G": [6, true], "b": [7, true], "s": [9, true], "n": [10, true], "c": [11, true],
-}
-const PILLOW := 8
-
-# 임시 타일 그림: 칸 번호 → [x, y, w, h, 색] 사각형 목록
-const PAINT := {
-	0: [[0, 0, 64, 64, "#4a4440"], [0, 0, 64, 4, "#5a5450"]],
-	1: [[0, 0, 64, 64, "#d9cfbf"], [16, 0, 1, 54, "#cfc4b2"], [32, 0, 1, 54, "#cfc4b2"], [48, 0, 1, 54, "#cfc4b2"],
-		[0, 54, 64, 10, "#8a7461"]],
-	2: [[0, 0, 64, 64, "#d9cfbf"], [6, 6, 52, 44, "#f4efe6"], [10, 10, 44, 36, "#7fa7c4"],
-		[10, 34, 44, 12, "#5d87a8"], [31, 10, 2, 36, "#f4efe6"], [0, 54, 64, 10, "#8a7461"]],
-	3: [[0, 0, 64, 64, "#b98c62"], [0, 16, 64, 1, "#a37752"], [0, 32, 64, 1, "#a37752"], [0, 48, 64, 1, "#a37752"],
-		[20, 0, 1, 16, "#a37752"], [44, 16, 1, 16, "#a37752"], [12, 32, 1, 16, "#a37752"], [36, 48, 1, 16, "#a37752"]],
-	4: [[0, 0, 64, 64, "#cfd3cf"], [0, 0, 64, 1, "#b5bab5"], [0, 0, 1, 64, "#b5bab5"],
-		[32, 0, 1, 64, "#b5bab5"], [0, 32, 64, 1, "#b5bab5"]],
-	5: [[0, 0, 64, 64, "#9c7350"], [4, 0, 56, 64, "#b98c62"]],
-	6: [[0, 0, 64, 64, "#6e7f86"], [4, 4, 56, 60, "#a9c3d1"], [30, 4, 4, 60, "#6e7f86"]],
-	7: [[0, 0, 64, 64, "#7d5a3c"], [4, 0, 60, 64, "#eef0f2"]],
-	8: [[0, 0, 64, 64, "#7d5a3c"], [4, 8, 60, 56, "#eef0f2"], [16, 16, 48, 22, "#ffffff"], [16, 36, 48, 2, "#d5dae0"]],
-	12: [[0, 0, 64, 64, "#7d5a3c"], [0, 0, 60, 64, "#eef0f2"]],
-	13: [[0, 0, 64, 64, "#7d5a3c"], [0, 8, 60, 56, "#eef0f2"], [0, 16, 48, 22, "#ffffff"], [0, 36, 48, 2, "#d5dae0"]],
-	9: [[0, 0, 64, 64, "#b98c62"], [8, 4, 48, 40, "#e9eef1"], [16, 12, 32, 22, "#c7d2d8"], [29, 6, 6, 8, "#9aa5ab"],
-		[14, 44, 36, 16, "#d8dde0"]],
-	10: [[0, 0, 64, 64, "#b98c62"], [10, 12, 44, 44, "#8a6545"], [14, 30, 36, 2, "#6b4c33"], [26, 18, 12, 8, "#f2e2b8"]],
-	11: [[0, 0, 64, 64, "#b98c62"], [4, 4, 56, 56, "#9a7552"], [31, 4, 2, 56, "#7a5a3e"]],
-}
+# 가구: [이름, 가운데 x, 바닥 닿는 y, 막는 영역 [x, y, 폭, 높이] 또는 [], 벽에 걸림?]  (모두 타일 단위)
+const PROPS := [
+	# 서하 방
+	["window", 5.0, 3.75, [], true],
+	["bed", 2.0, 7.0, [1, 4, 2, 3], false],
+	["nightstand", 3.5, 4.9, [3, 4, 1, 0.9], false],
+	["mirror", 7.6, 3.0, [], true],
+	["sink", 7.6, 4.7, [7.1, 4, 1, 0.7], false],
+	["plant", 1.5, 9.9, [1.1, 9.3, 0.8, 0.6], false],
+	# 보호자실
+	["window", 18.0, 3.75, [], true],
+	["bed", 15.0, 7.0, [14, 4, 2, 3], false],
+	["nightstand", 16.5, 4.9, [16, 4, 1, 0.9], false],
+	["wardrobe", 21.0, 4.9, [20, 4, 2, 0.9], false],
+	# 채린 방
+	["window", 5.0, 13.75, [], true],
+	["bed", 2.0, 17.0, [1, 14, 2, 3], false],
+	["nightstand", 3.5, 14.9, [3, 14, 1, 0.9], false],
+	["plant", 7.6, 14.9, [7.2, 14.3, 0.8, 0.6], false],
+	["armchair", 7.0, 19.6, [6.3, 18.9, 1.4, 0.7], false],
+	# 빈 병실 (옷장 = 밤 순찰 때 숨을 곳 가안)
+	["window", 18.0, 13.75, [], true],
+	["desk", 16.0, 15.6, [15.2, 14, 1.6, 1.3], false],
+	["wardrobe", 21.0, 14.9, [20, 14, 2, 0.9], false],
+	# 병동 복도 끝 비상구
+	["glass_door", 11.5, 4.0, [], true],
+	# 중앙 복도: 추억의 벽(사진 + 빈 액자), 소파
+	["frame_photo", 14.8, 23.2, [], true],
+	["frame_photo", 15.8, 23.2, [], true],
+	["frame_photo", 16.8, 23.2, [], true],
+	["frame_empty", 17.8, 23.2, [], true],
+	["sofa", 5.0, 25.0, [3.3, 24, 3.4, 0.9], false],
+	["plant", 7.4, 24.9, [7.0, 24.3, 0.8, 0.6], false],
+]
 
 const TIMES := [
 	["아침", Color("#ffe9d6")], ["낮", Color.WHITE], ["저녁", Color("#ffbf94")], ["밤", Color("#36406a")],
@@ -91,41 +103,51 @@ var time_index := 1
 func _ready() -> void:
 	var map := TileMapLayer.new()
 	map.tile_set = _make_tileset()
+	map.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	add_child(map)
 	for y in LAYOUT.size():
 		var row: String = LAYOUT[y]
 		for x in row.length():
-			var ch := row[x]
-			var idx: int = TILES[ch][0]
-			if ch == "b":   # 침대는 2칸 폭: 왼쪽/오른쪽, 머리맡/이불 그림을 이웃 칸으로 고름
-				var head: bool = y == 0 or LAYOUT[y - 1][x] != "b"
-				var right: bool = x > 0 and row[x - 1] == "b"
-				idx = (13 if head else 12) if right else (PILLOW if head else 7)
-			map.set_cell(Vector2i(x, y), 0, Vector2i(idx, 0))
+			map.set_cell(Vector2i(x, y), 0, _atlas_coord(x, y))
 
-	for text in LABELS:
-		var l := Label.new()
-		l.text = text
-		l.add_theme_font_size_override("font_size", 20)
-		l.add_theme_color_override("font_color", Color(0, 0, 0, 0.45))
-		l.position = LABELS[text] * TILE - Vector2(40, 14)
-		add_child(l)
+	var wall_deco := Node2D.new()      # 벽에 걸린 것: 언제나 서하 뒤
+	add_child(wall_deco)
+	var objects := Node2D.new()        # 가구 + 서하: 발 위치(y)로 앞뒤 정렬
+	objects.y_sort_enabled = true
+	add_child(objects)
+	var blockers := StaticBody2D.new()
+	add_child(blockers)
+	for p in PROPS:
+		var spr := Sprite2D.new()
+		spr.texture = load(PROP_DIR + p[0] + ".png")
+		spr.centered = false
+		spr.offset = Vector2(-spr.texture.get_width() / 2.0, -spr.texture.get_height())
+		spr.position = Vector2(p[1], p[2]) * TILE
+		spr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		(wall_deco if p[4] else objects).add_child(spr)
+		if p[3].size() == 4:
+			var cs := CollisionShape2D.new()
+			var rect := RectangleShape2D.new()
+			rect.size = Vector2(p[3][2], p[3][3]) * TILE
+			cs.shape = rect
+			cs.position = (Vector2(p[3][0], p[3][1]) + Vector2(p[3][2], p[3][3]) / 2.0) * TILE
+			blockers.add_child(cs)
 
 	grid = _make_grid()
 	grid.visible = false
 	add_child(grid)
 
 	player = CharacterBody2D.new()
-	player.position = Vector2(5 * TILE, 7.5 * TILE)
+	player.position = Vector2(5 * TILE, 8 * TILE)
 	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = Vector2(40, 18)
-	shape.shape = rect
+	var prect := RectangleShape2D.new()
+	prect.size = Vector2(40, 18)
+	shape.shape = prect
 	shape.position = Vector2(0, -9)
 	player.add_child(shape)
 	seoha = load("res://scenes/characters/seoha.tscn").instantiate()
 	player.add_child(seoha)
-	add_child(player)
+	objects.add_child(player)
 
 	camera = Camera2D.new()
 	camera.limit_left = 0
@@ -137,9 +159,10 @@ func _ready() -> void:
 
 	modulate_node = CanvasModulate.new()
 	add_child(modulate_node)
-	# 달빛: 비상구 유리문과 서하 방 창문
-	moon_lights.append(_make_light(Vector2(11.5 * TILE, 4 * TILE), 3.2))
-	moon_lights.append(_make_light(Vector2(5 * TILE, 4 * TILE), 2.4))
+	# 달빛: 비상구 유리문과 각 방 창문
+	moon_lights.append(_make_light(Vector2(11.5, 5.0) * TILE, 3.4))
+	moon_lights.append(_make_light(Vector2(5.0, 5.2) * TILE, 2.6))
+	moon_lights.append(_make_light(Vector2(5.0, 15.2) * TILE, 2.6))
 
 	var hud := CanvasLayer.new()
 	add_child(hud)
@@ -150,6 +173,18 @@ func _ready() -> void:
 	info.add_theme_constant_override("outline_size", 6)
 	hud.add_child(info)
 	_apply_time()
+
+
+func _atlas_coord(x: int, y: int) -> Vector2i:
+	var ch: String = LAYOUT[y][x]
+	if ch == "#":
+		return WALL_TOP
+	if ch == "W":
+		var k := 0   # 위로 연속된 벽 앞면 수 → 몰딩(0) / 회벽(1) / 판벽(2)
+		while y - k - 1 >= 0 and LAYOUT[y - k - 1][x] == "W":
+			k += 1
+		return WALL_FACE + Vector2i(x % 2, mini(k, 2))
+	return FLOORS[ch] + Vector2i(x % 2, y % 2)
 
 
 func _physics_process(_delta: float) -> void:
@@ -223,33 +258,30 @@ func _make_grid() -> Node2D:
 	return n
 
 
-# ── 임시 타일 그림 ────────────────────────────────────────────
 func _make_tileset() -> TileSet:
-	var count := 14
-	var img := Image.create(TILE * count, TILE, false, Image.FORMAT_RGBA8)
-	for i in PAINT:
-		for r in PAINT[i]:
-			img.fill_rect(Rect2i(i * TILE + r[0], r[1], r[2], r[3]), Color(r[4]))
-
 	var ts := TileSet.new()
 	ts.tile_size = Vector2i(TILE, TILE)
 	ts.add_physics_layer()
 	var src := TileSetAtlasSource.new()
-	src.texture = ImageTexture.create_from_image(img)
+	src.texture = load(ATLAS)
 	src.texture_region_size = Vector2i(TILE, TILE)
 	ts.add_source(src, 0)
-	var solid := {}
-	for ch in TILES:
-		solid[TILES[ch][0]] = TILES[ch][1]
-	for i in [PILLOW, 12, 13]:
-		solid[i] = true
+	var size := src.get_atlas_grid_size()
 	var half := TILE / 2.0
-	for i in count:
-		src.create_tile(Vector2i(i, 0))
-		if solid.get(i, false):
-			var td := src.get_tile_data(Vector2i(i, 0), 0)
-			td.add_collision_polygon(0)
-			td.set_collision_polygon_points(0, 0, PackedVector2Array([
-				Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half)]))
+	var solid_rows := {}   # 벽 앞면·윗면만 막힘
+	for y in 3:
+		solid_rows[WALL_FACE + Vector2i(0, y)] = true
+		solid_rows[WALL_FACE + Vector2i(1, y)] = true
+	solid_rows[WALL_TOP] = true
+	for y in size.y:
+		for x in size.x:
+			var c := Vector2i(x, y)
+			if not src.has_room_for_tile(c, Vector2i.ONE, 1, Vector2i.ZERO, 1):
+				continue
+			src.create_tile(c)
+			if solid_rows.has(c):
+				var td := src.get_tile_data(c, 0)
+				td.add_collision_polygon(0)
+				td.set_collision_polygon_points(0, 0, PackedVector2Array([
+					Vector2(-half, -half), Vector2(half, -half), Vector2(half, half), Vector2(-half, half)]))
 	return ts
-
