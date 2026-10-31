@@ -74,5 +74,13 @@
   "side_door_open": [
     112,
     128
+  ],
+  "side_door_closed_h": [
+    128,
+    12
+  ],
+  "side_door_open_h": [
+    128,
+    112
   ]
 }

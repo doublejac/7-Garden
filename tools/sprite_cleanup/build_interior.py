@@ -204,6 +204,9 @@ def build_props_2():
         "side_door_closed": cut(WALLS_SRC, SIDE_DOOR_CLOSED, k=2 * T / 994),
     }
     items["side_door_open"] = open_door(items["side_door_closed"])
+    # 가로 벽용: 기둥이 좌우, 문짝은 왼쪽 기둥에서 아래 방 쪽으로 열림
+    items["side_door_closed_h"] = items["side_door_closed"].transpose(Image.ROTATE_90)
+    items["side_door_open_h"] = items["side_door_open"].transpose(Image.ROTATE_90).transpose(Image.FLIP_TOP_BOTTOM)
     for name, im in items.items():
         im.save(out / f"{name}.png")
         meta[name] = list(im.size)

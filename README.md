@@ -47,15 +47,16 @@ tests/         test_runner.tscn  자동 점검
 - 애니메이션 리소스 만들기: `godot --headless --path . -s res://tools/build_spriteframes.gd -- seoha`
 - 서하 노드는 텍스처 필터가 Linear입니다. 1배 크기로 쓰는 것을 기준으로 합니다.
 
-## 맵 테스트
-- `scenes/dev/map_test.tscn`: 64px 타일 테스트 맵 (서하 방, 보호자실, 채린 방, 빈 병실, 병동 복도, 중앙 복도 일부). F6으로 실행.
-  - 방향키 걷기 · E 문 열기/닫기 · C 복도 바닥 후보 바꾸기 · T 시간대(아침/낮/저녁/밤) · Z 75% 확대/원래대로 · G 격자 · Esc 끝내기
-  - 바닥·벽은 `map_test.gd`의 `LAYOUT` 글자 배열, 가구는 `PROPS`, 옆벽 문은 `DOORS` 표를 고치면 바로 바뀝니다.
-  - 벽 윗면(`#`)은 이웃 칸을 보고 테두리를 자동으로 고릅니다(16종).
-  - 그림: `assets/art/tiles/interior.png`(64px 타일), `assets/art/props/interior/`(가구).
-    Gemini 원본은 `tools/sprite_cleanup/src/map/`, 정리는 `python3 tools/sprite_cleanup/build_interior.py`.
-    타일 시트는 Gemini 한 칸을 타일 2×2칸(128px)으로 씁니다. 벽 앞면은 3칸(몰딩/회벽/판벽) 높이입니다.
-  - 맵 전체 설계는 '해무장 맵 설계서' 문서 참고.
+## 맵
+- 실내 맵은 공용 로더 `scripts/map/interior_map.gd`(InteriorMap) + 맵 데이터 `data/maps/<이름>.json` 한 쌍으로 만듭니다.
+  JSON 형식(바닥·벽 글자 배열, 가구, 문, 방 이름, 달빛)은 `interior_map.gd` 맨 위 설명 참고.
+- `scenes/maps/int_main.tscn`: 본관 1층 (병동 4실, 병동 복도, 중앙 복도, 식당, 주방, 원장실, 투약실, 로비, 현관, 철문). F6으로 단독 실행.
+  - 방향키 걷기 · E 문 열기/닫기 · L 방 이름 · C 복도 바닥 후보 · T 시간대(아침/낮/저녁/밤) · Z 확대(100/75/50%) · G 격자 · Esc
+  - 문 종류: 세로 벽 문(v), 가로 벽 문(h), 정면 벽 문(f). 철문은 잠겨 있음. 서하가 문 자리에 서 있으면 닫히지 않음.
+  - 주방 조리대, 투약실 약장, 원장실 책장, 철문 등은 아직 기존 가구(옷장·나무 문)로 자리만 잡아 둠.
+- 그림: `assets/art/tiles/interior.png`(64px 타일), `assets/art/props/interior/`(가구).
+  Gemini 원본은 `tools/sprite_cleanup/src/map/`, 정리는 `python3 tools/sprite_cleanup/build_interior.py`.
+  타일 시트는 Gemini 한 칸을 타일 2×2칸(128px)으로 씁니다. 벽 앞면은 3칸(몰딩/회벽/판벽), 벽 윗면은 이웃을 보고 16종 자동.
 
 ## 아직 할 일
 - 한글 폰트: 지금은 운영체제 기본 폰트로 한글을 표시합니다. 배포 전에 Pretendard나 Noto Sans KR 같은 무료 폰트를 `assets/fonts/`에 넣고 테마에 지정해야 합니다.
