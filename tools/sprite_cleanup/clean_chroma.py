@@ -66,7 +66,23 @@ def cut(rgba, box, pad=4):
 
 
 def hq_resize(img, scale):
-    w, h = max(1, round(img.width * scale)), max(1, round(img.height * scale))
+    return hq_resize_xy(img, max(1, round(img.width * scale)), max(1, round(img.height * scale)))
+
+
+def chin_rows(img):
+    """(머리 꼭대기, 턱, 발바닥) 행 번호. 턱 = 위쪽 60% 안에서 얼굴 피부가 보이는 마지막 줄."""
+    a = np.array(img).astype(int)
+    al = a[..., 3] > 128
+    ys = np.nonzero(al.any(1))[0]
+    top, bot = ys[0], ys[-1]
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    skin = al & (r > 200) & (g > 150) & (b > 130) & (r - b > 25)
+    rows = np.nonzero(skin.sum(1) >= 3)[0]
+    rows = rows[rows < top + 0.6 * (bot - top)]
+    return top, (rows[-1] + 1 if rows.size else top + (bot - top) // 2), bot
+
+
+def hq_resize_xy(img, w, h):
     a = np.array(img).astype(np.float32) / 255.0
     pre = a[..., :3] * a[..., 3:4]
     chans = [Image.fromarray((c * 255).astype(np.uint8)).resize((w, h), Image.LANCZOS)
@@ -215,6 +231,34 @@ def main(cfg_path, out_dir):
         # 앉은 동작처럼 키로 맞출 수 없는 동작은 같은 시트의 다른 동작 배율을 빌려 씀
         k = ref_scale * factor.get(anim["name"], factor.get(anim.get("scale_like"), 1.0))
         scaled[anim["name"]] = [hq_resize(f, k) for f in fr]
+
+    # 2.5차: 비율 맞춤 – 그림마다 머리·몸 비율이 다르게 그려진 동작을 기준 동작의 비율로 고친다
+    # (머리끝~턱, 턱~발바닥을 따로 늘이거나 줄이고, 폭은 머리 폭 비율로 맞춤)
+    for anim in cfg["animations"]:
+        ref = anim.get("match_proportions")
+        if not ref:
+            continue
+        def parts(fs):
+            up, low = [], []
+            for f in fs:
+                top, chin, bot = chin_rows(f)
+                up.append(chin - top); low.append(bot - chin)
+            return np.median(up), np.median(low)
+        ru, rl = parts(scaled[ref])
+        mu, ml = parts(scaled[anim["name"]])
+        kx = np.median([head_width(f) for f in scaled[ref]]) / np.median([head_width(f) for f in scaled[anim["name"]]])
+        ku, kl = ru / mu, rl / ml
+        new = []
+        for f in scaled[anim["name"]]:
+            top, chin, bot = chin_rows(f)
+            w = max(1, round(f.width * kx))
+            a = hq_resize_xy(f.crop((0, 0, f.width, chin)), w, max(1, round(chin * ku)))
+            b = hq_resize_xy(f.crop((0, chin, f.width, f.height)), w, max(1, round((f.height - chin) * kl)))
+            g = Image.new("RGBA", (w, a.height + b.height), (0, 0, 0, 0))
+            g.alpha_composite(a, (0, 0)); g.alpha_composite(b, (0, a.height))
+            new.append(g.crop(g.getbbox()))
+        scaled[anim["name"]] = new
+        print(f"  {anim['name']}: 비율 맞춤 (폭 x{kx:.3f}, 머리 x{ku:.3f}, 몸 x{kl:.3f})")
 
     # 3차: 같은 칸, 발바닥 정렬, 좌우 반전 동작 생성
     every = [f for fr in scaled.values() for f in fr]

@@ -132,7 +132,8 @@
           2
         ]
       ],
-      "scale_like": "idle"
+      "scale_like": "idle",
+      "match_proportions": "walk_right"
     },
     {
       "name": "walk_down",
