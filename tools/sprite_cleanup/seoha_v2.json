@@ -90,7 +90,8 @@
           3
         ]
       ],
-      "normalize": true
+      "normalize": true,
+      "face": 1
     },
     {
       "name": "idle",
@@ -174,7 +175,8 @@
           3
         ]
       ],
-      "normalize": true
+      "normalize": true,
+      "face": 1
     },
     {
       "name": "take_pill",
@@ -250,7 +252,8 @@
           1
         ]
       ],
-      "normalize": true
+      "normalize": true,
+      "face": 1
     },
     {
       "name": "cry",
@@ -310,7 +313,8 @@
         ]
       ],
       "normalize": false,
-      "scale_like": "take_pill"
+      "scale_like": "take_pill",
+      "face": 1
     },
     {
       "name": "happy",
@@ -360,7 +364,8 @@
           4
         ]
       ],
-      "normalize": true
+      "normalize": true,
+      "face": 1
     }
   ]
 }

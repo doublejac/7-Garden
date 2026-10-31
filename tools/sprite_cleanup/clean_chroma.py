@@ -3,7 +3,7 @@
 1) 초록 배경 제거 (가장자리 반투명 처리 + 초록 번짐 제거)
 2) 격자 순서대로 프레임 자동 인식 (줄 → 칸)
 3) 서 있는 동작은 '머리 꼭대기~발바닥' 높이로 캐릭터 크기 통일 (앉은 동작은 normalize: false)
-4) 조개 핀이 반대쪽에 그려진 프레임 좌우 반전
+4) 조개 핀이 반대쪽에 그려진 프레임, 옆모습에서 반대 방향을 보는 프레임 좌우 반전
 5) 같은 크기 칸, 발바닥 기준 정렬 → 동작별 PNG + frames.json
 
 사용: python3 clean_chroma.py 설정.json 출력폴더
@@ -103,6 +103,23 @@ def stature(img):
     return solid[-1] - rows[0]
 
 
+def face_side(img):
+    """얼굴(피부색)이 머리 가운데보다 어느 쪽에 있는지. +면 오른쪽을 봄."""
+    a = np.array(img).astype(int)
+    al = a[..., 3] > 128
+    ys = np.nonzero(al.any(1))[0]
+    top, h = ys[0], ys[-1] - ys[0]
+    head = a[top: top + int(h * 0.42)]
+    hal = al[top: top + int(h * 0.42)]
+    r, g, b = head[..., 0], head[..., 1], head[..., 2]
+    skin = hal & (r > 200) & (g > 150) & (b > 130) & (r - b > 25)
+    xs = np.nonzero(hal.any(0))[0]
+    sx = np.nonzero(skin)[1]
+    if xs.size == 0 or sx.size < 20:
+        return 0
+    return sx.mean() - (xs[0] + xs[-1]) / 2
+
+
 def pin_offset(img):
     a = np.array(img).astype(int)
     alpha = a[..., 3] > 128
@@ -135,6 +152,11 @@ def main(cfg_path, out_dir):
         for sheet, row, col in anim["frames"]:
             rgba, rows = sheets[sheet]
             img = cut(rgba, rows[row][col])
+            face = anim.get("face")         # 옆모습: +1 오른쪽을 봄, -1 왼쪽을 봄
+            if face:
+                f = face_side(img)
+                if f and np.sign(f) != face:
+                    img = img.transpose(Image.FLIP_LEFT_RIGHT)
             side = anim.get("pin")          # +1 화면 오른쪽, -1 화면 왼쪽
             if side:
                 off = pin_offset(img)
