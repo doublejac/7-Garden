@@ -37,7 +37,8 @@ tests/         test_runner.tscn  자동 점검
 ## 캐릭터 스프라이트
 - `scenes/characters/seoha.tscn`: 서하 (AnimatedSprite2D). 발바닥이 노드 위치에 오도록 맞춰져 있습니다.
 - `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기, 1~5로 특수 모션.
-- 애니메이션: walk_down / walk_up / walk_left / walk_right / idle / wave / point / worry / sit_draw / sit_bench
+- 애니메이션: walk_down / walk_up / walk_left / walk_right / idle / idle_up / idle_left / idle_right / wave / point / worry / sit_draw / sit_bench
+- 멈추면 마지막으로 바라본 방향의 대기 동작이 재생됩니다. 옆·뒤 대기 동작과 조개 핀 위치 고정은 `tools/sprite_cleanup/make_idles.py`로 만들었습니다.
 - 원본은 Gemini 시트이며, `tools/sprite_cleanup/clean_sheet.py`로 배경 제거, 절반 크기 고품질 축소, 동작별 키 맞춤, 프레임 정렬을 했습니다.
   (이 스크립트는 Python과 numpy, scipy, Pillow가 필요합니다.)
   새 시트를 넣을 때는 설정 파일(예: `seoha.json`)에 프레임 위치를 적고 같은 도구로 정리한 뒤,

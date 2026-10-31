@@ -93,6 +93,33 @@
       ],
       "fps": 2,
       "loop": true
+    },
+    "idle_right": {
+      "cell": [
+        222,
+        207
+      ],
+      "loop": true,
+      "frames": 4,
+      "fps": 3
+    },
+    "idle_up": {
+      "cell": [
+        222,
+        207
+      ],
+      "loop": true,
+      "frames": 4,
+      "fps": 3
+    },
+    "idle_left": {
+      "cell": [
+        222,
+        207
+      ],
+      "loop": true,
+      "frames": 4,
+      "fps": 3
     }
   }
 }

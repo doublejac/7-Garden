@@ -1,6 +1,6 @@
 # character_sprite.gd
-# 4방향 걷기 캐릭터. move_dir를 넣으면 걷기 애니메이션을 고르고, 멈추면 마지막 방향의 서 있는 프레임으로.
-# idle 애니메이션은 정면에서만 쓴다.
+# 4방향 걷기 캐릭터. move_dir를 넣으면 걷기 애니메이션을 고르고,
+# 멈추면 마지막으로 바라본 방향의 대기 동작(idle / idle_up / idle_left / idle_right)을 재생한다.
 class_name CharacterSprite
 extends AnimatedSprite2D
 
@@ -19,8 +19,9 @@ func walk(move_dir: Vector2) -> void:
 
 
 func stand() -> void:
-	if facing == "down" and sprite_frames.has_animation("idle"):
-		play("idle")
+	var idle_name := "idle" if facing == "down" else "idle_" + facing
+	if sprite_frames.has_animation(idle_name):
+		play(idle_name)
 	else:
 		play("walk_" + facing)
 		pause()
