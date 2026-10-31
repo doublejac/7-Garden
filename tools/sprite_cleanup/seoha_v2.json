@@ -4,7 +4,8 @@
     "story": "src/seoha_story.jpg",
     "story2": "src/seoha_story2.jpg",
     "sit": "src/seoha_sit.jpg",
-    "walk2": "src/seoha_walk2.jpg"
+    "walk2": "src/seoha_walk2.jpg",
+    "walk3": "src/seoha_walk3.jpg"
   },
   "reference": {
     "animation": "idle",
@@ -13,82 +14,83 @@
   "animations": [
     {
       "name": "walk_down",
-      "fps": 8,
+      "fps": 6,
       "pin": 1,
       "frames": [
         [
-          "walk2",
+          "walk3",
           1,
           0
         ],
         [
-          "walk2",
+          "walk3",
           1,
           1
         ],
         [
-          "walk2",
+          "walk3",
           1,
           2
         ],
         [
-          "walk2",
+          "walk3",
           1,
-          1
+          3
         ]
       ],
       "normalize": "head"
     },
     {
       "name": "walk_up",
-      "fps": 8,
+      "fps": 6,
       "pin": -1,
       "frames": [
         [
-          "basic",
-          1,
+          "walk3",
+          2,
           0
         ],
         [
-          "basic",
-          1,
+          "walk3",
+          2,
           1
         ],
         [
-          "basic",
-          1,
+          "walk3",
+          2,
           2
         ],
         [
-          "basic",
-          1,
+          "walk3",
+          2,
           3
         ]
       ],
-      "normalize": true
+      "normalize": false,
+      "scale_like": "walk_down"
     },
     {
       "name": "walk_right",
-      "fps": 8,
+      "fps": 6,
       "mirror_as": "walk_left",
       "frames": [
         [
-          "walk2",
+          "walk3",
           0,
           0
         ],
         [
-          "walk2",
+          "walk3",
           0,
           1
         ],
         [
-          "walk2",
+          "walk3",
           0,
           2
         ],
         [
-          "walk2",
+          "walk3",
           0,
           3
         ]

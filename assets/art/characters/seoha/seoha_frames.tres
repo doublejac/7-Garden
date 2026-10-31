@@ -624,7 +624,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"walk_down",
-"speed": 8.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -641,7 +641,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"walk_left",
-"speed": 8.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -658,7 +658,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"walk_right",
-"speed": 8.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -675,7 +675,7 @@ animations = [{
 }],
 "loop": 1,
 "name": &"walk_up",
-"speed": 8.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,

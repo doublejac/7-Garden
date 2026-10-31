@@ -10,7 +10,7 @@
         152,
         157
       ],
-      "fps": 8,
+      "fps": 6,
       "loop": true
     },
     "walk_up": {
@@ -19,7 +19,7 @@
         152,
         157
       ],
-      "fps": 8,
+      "fps": 6,
       "loop": true
     },
     "walk_right": {
@@ -28,7 +28,7 @@
         152,
         157
       ],
-      "fps": 8,
+      "fps": 6,
       "loop": true
     },
     "walk_left": {
@@ -37,7 +37,7 @@
         152,
         157
       ],
-      "fps": 8,
+      "fps": 6,
       "loop": true
     },
     "idle": {
