@@ -138,7 +138,7 @@
       "name": "walk_down",
       "fps": 6,
       "pin": 1,
-      "normalize": false,
+      "normalize": "head",
       "frames": [
         [
           "base",
@@ -161,13 +161,14 @@
           3
         ]
       ],
-      "scale_like": "idle"
+      "head_ref": "idle",
+      "head_metric": "both"
     },
     {
       "name": "walk_up",
       "fps": 6,
       "pin": -1,
-      "normalize": false,
+      "normalize": "head",
       "frames": [
         [
           "base",
@@ -190,14 +191,15 @@
           3
         ]
       ],
-      "scale_like": "idle"
+      "head_ref": "idle_up",
+      "head_metric": "both"
     },
     {
       "name": "walk_right",
       "fps": 6,
       "face": 1,
       "mirror_as": "walk_left",
-      "normalize": false,
+      "normalize": "head",
       "frames": [
         [
           "base",
@@ -220,7 +222,8 @@
           3
         ]
       ],
-      "scale_like": "idle"
+      "head_ref": "idle_right",
+      "head_metric": "stature"
     },
     {
       "name": "take_pill",

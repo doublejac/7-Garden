@@ -201,7 +201,14 @@ def main(cfg_path, out_dir):
     for anim in pending:
         ref = anim["head_ref"]
         ref_h = np.median([hair_height(f) for f in raw[ref]])
-        factor[anim["name"]] = factor.get(ref, 1.0) * ref_h / np.median([hair_height(f) for f in raw[anim["name"]]])
+        k_h = ref_h / np.median([hair_height(f) for f in raw[anim["name"]]])
+        if anim.get("head_metric") == "both":   # 머리 높이와 폭 비율의 평균 (걷기처럼 같은 방향끼리 비교할 때)
+            ref_w = np.median([head_width(f) for f in raw[ref]])
+            k_w = ref_w / np.median([head_width(f) for f in raw[anim["name"]]])
+            k_h = float(np.sqrt(k_h * k_w))
+        elif anim.get("head_metric") == "stature":   # 같은 방향 정지 동작과 키(머리 꼭대기~발)를 맞춤
+            k_h = np.median([stature(f) for f in raw[ref]]) / np.median([stature(f) for f in raw[anim["name"]]])
+        factor[anim["name"]] = factor.get(ref, 1.0) * k_h
     scaled = {}
     for anim in cfg["animations"]:
         fr = raw[anim["name"]]
