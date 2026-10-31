@@ -1,0 +1,28 @@
+; Engine configuration file.
+; Godot 4.7에서 열면 에디터가 이 파일을 자동으로 정리해 다시 저장합니다.
+
+config_version=5
+
+[application]
+
+config/name="해무장"
+config/description="완전한 작별을 위한 정원"
+run/main_scene="res://scenes/main/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+GameState="*res://scripts/autoload/GameState.gd"
+SaveManager="*res://scripts/autoload/SaveManager.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

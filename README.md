@@ -1,0 +1,40 @@
+# 해무장 (Godot 4.7 프로젝트)
+
+## 여는 법
+1. Godot **4.7.2 Standard** 버전을 설치합니다. (.NET 버전 아님)
+2. Godot 프로젝트 관리자에서 **가져오기**를 누르고 이 폴더의 `project.godot`을 선택합니다.
+3. 에디터 오른쪽 위 **▶ (F5)** 를 누르면 개발용 대사 재생기가 실행됩니다.
+   - 클릭 / 스페이스 / 엔터: 다음 줄
+   - F1: 화면 위 수치 표시 켜기/끄기
+   - "2회차로 시작"은 개발용 버튼입니다.
+
+## 폴더 구조
+```
+assets/        그림, 소리, 폰트 (아직 비어 있음)
+data/dialogue/ day1~4.csv  대사 (엑셀 양식에서 내보낸 파일)
+scenes/main/   main.tscn   개발용 대사 재생기
+scripts/autoload/  GameState.gd, SaveManager.gd  (Autoload로 등록됨)
+scripts/dialogue/  DialogueRunner.gd  대사 CSV를 읽고 분기·수치·플래그를 처리
+shaders/       screen_fx.gdshader  채도(색채 상실)와 비네트(시야 상실)
+tests/         test_runner.tscn  자동 점검
+```
+
+## 대사 고치는 법
+1. 엑셀 양식(`haemujang_dialogue_dayN.xlsx`)의 '대사' 시트를 고칩니다.
+2. '대사' 시트만 **CSV UTF-8**로 저장하고, 1행(한글 제목)을 지워 2행(영문 키)이 첫 줄이 되게 합니다.
+3. `data/dialogue/dayN.csv`에 덮어씁니다.
+   - 같은 폴더의 `dayN.csv.import`는 지우지 마세요. Godot이 CSV를 번역 파일로 바꾸지 않게 막아줍니다.
+   - 새 일차 파일을 추가할 때는 `day1.csv.import`를 복사해 이름만 바꾸면 됩니다.
+
+## 자동 점검
+에디터에서 `tests/test_runner.tscn`을 열고 **현재 씬 실행 (F6)** 을 누르면 출력 창에 결과가 나옵니다.
+- 1회차를 첫 선택지 / 마지막 선택지로 각각 끝까지 돌려, 일차별 평온도가 49 → 58 → 67 → 76인지 확인
+- 2회차를 붉은 선택지 위주로 끝까지 돌려 오류가 없는지 확인
+- 저장 → 불러오기 확인
+
+대사나 수치를 고친 뒤에는 이 점검을 한 번 돌려보세요.
+
+## 아직 할 일
+- 한글 폰트: 지금은 운영체제 기본 폰트로 한글을 표시합니다. 배포 전에 Pretendard나 Noto Sans KR 같은 무료 폰트를 `assets/fonts/`에 넣고 테마에 지정해야 합니다.
+- 연출 키(`fx` 열)는 글리치 깜빡임과 채도만 연결되어 있고, 나머지는 화면 위 표시줄에 키 이름만 표시됩니다.
+- 저장 데이터 위치(Windows): `%APPDATA%\Godot\app_userdata\해무장\`
