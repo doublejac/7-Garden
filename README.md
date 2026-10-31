@@ -49,8 +49,9 @@ tests/         test_runner.tscn  자동 점검
 
 ## 맵 테스트
 - `scenes/dev/map_test.tscn`: 64px 타일 테스트 맵 (서하 방, 보호자실, 채린 방, 빈 병실, 병동 복도, 중앙 복도 일부). F6으로 실행.
-  - 방향키 걷기 · T 시간대(아침/낮/저녁/밤) · Z 75% 확대/원래대로 · G 격자 · Esc 끝내기
-  - 바닥·벽은 `map_test.gd`의 `LAYOUT` 글자 배열, 가구는 `PROPS` 표를 고치면 바로 바뀝니다.
+  - 방향키 걷기 · E 문 열기/닫기 · C 복도 바닥 후보 바꾸기 · T 시간대(아침/낮/저녁/밤) · Z 75% 확대/원래대로 · G 격자 · Esc 끝내기
+  - 바닥·벽은 `map_test.gd`의 `LAYOUT` 글자 배열, 가구는 `PROPS`, 옆벽 문은 `DOORS` 표를 고치면 바로 바뀝니다.
+  - 벽 윗면(`#`)은 이웃 칸을 보고 테두리를 자동으로 고릅니다(16종).
   - 그림: `assets/art/tiles/interior.png`(64px 타일), `assets/art/props/interior/`(가구).
     Gemini 원본은 `tools/sprite_cleanup/src/map/`, 정리는 `python3 tools/sprite_cleanup/build_interior.py`.
     타일 시트는 Gemini 한 칸을 타일 2×2칸(128px)으로 씁니다. 벽 앞면은 3칸(몰딩/회벽/판벽) 높이입니다.

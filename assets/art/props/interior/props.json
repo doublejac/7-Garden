@@ -62,5 +62,17 @@
   "window": [
     141,
     136
+  ],
+  "exit_door": [
+    181,
+    184
+  ],
+  "side_door_closed": [
+    12,
+    128
+  ],
+  "side_door_open": [
+    125,
+    128
   ]
 }

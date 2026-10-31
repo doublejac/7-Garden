@@ -30,7 +30,24 @@ TILE_BLOCKS = {
 }
 WALL_AT = (4, 2)        # 벽 앞면 2×3 (몰딩 / 회벽 / 판벽)
 WALL_TOP_AT = (6, 2)    # 벽 윗면 1칸
-ATLAS = (8, 5)
+ATLAS = (12, 9)
+
+# 2차 시트 (복도 바닥 후보·비상구, 옆벽 문·벽 윗면). 좌표는 원본 2048px 기준 [x0, y0, x1, y1]
+CORRIDOR_SRC = "corridor_exit.jpg"
+CORRIDOR_BLOCKS = {          # 이름: (원본 칸, 아틀라스 위치, 블록 크기(타일))
+    "marble": ((37, 528, 512, 1013), (8, 0), 2),
+    "herringbone": ((532, 528, 1014, 1013), (10, 0), 2),
+    "floral": ((37, 1035, 511, 1515), (8, 2), 2),
+    "runner_v": ((532, 1034, 1014, 1516), (0, 5), 3),   # 세로 복도용 러너 카펫 (3칸 폭)
+}
+RUNNER_H_AT = (3, 5)         # 러너를 90도 돌린 가로 복도용
+EXIT_DOOR = (1034, 527, 2012, 1519)
+WALLS_SRC = "side_doors_walls.jpg"
+SIDE_DOOR_CLOSED = (245, 20, 342, 1014)
+SIDE_DOOR_OPEN = (1034, 20, 2007, 1014)
+WALL_TOP_V = (26, 1034, 512, 1522)
+WALL_TOP_H = (532, 1034, 1014, 1522)
+WALL_AUTO_AT = (6, 5)        # 벽 윗면 자동 타일 16종 (4×4). 번호 = 위1 + 오른쪽2 + 아래4 + 왼쪽8 (그쪽도 벽이면 켜짐)
 
 # 가구: 시트에서 찾은 덩어리를 왼쪽 위부터 읽는 순서대로 이름 붙임
 PROP_NAMES = ["bed", "nightstand", "sink", "mirror", "plant", "wardrobe", "armchair", "desk",
@@ -85,6 +102,7 @@ def build_tiles():
     # 벽 윗면: 짙은 나무색 한 가지 (줄을 넣으면 세로 벽에 가로줄이 반복돼 보임)
     wt = Image.new("RGBA", (T, T), (61, 42, 31, 255))
     atlas.paste(wt, (WALL_TOP_AT[0] * T, WALL_TOP_AT[1] * T))
+    build_tiles_2(atlas)
     out = ROOT / "assets/art/tiles"
     out.mkdir(parents=True, exist_ok=True)
     atlas.save(out / "interior.png")
@@ -116,6 +134,68 @@ def build_props():
     (out / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
 
+def build_tiles_2(atlas):
+    """복도 바닥 후보와 벽 윗면 자동 타일."""
+    img = Image.open(SRC / CORRIDOR_SRC).convert("RGB")
+    for (x0, y0, x1, y1), (ax, ay), n in CORRIDOR_BLOCKS.values():
+        block = img.crop((x0 + 6, y0 + 6, x1 - 6, y1 - 6)).resize((n * T, n * T), Image.LANCZOS)
+        atlas.paste(block, (ax * T, ay * T))
+        if n == 3:
+            atlas.paste(block.transpose(Image.ROTATE_90), (RUNNER_H_AT[0] * T, RUNNER_H_AT[1] * T))
+
+    walls = Image.open(SRC / WALLS_SRC).convert("RGB")
+    v = walls.crop(WALL_TOP_V).resize((T, T), Image.LANCZOS)
+    h = walls.crop(WALL_TOP_H).resize((T, T), Image.LANCZOS)
+    a_v, a_h = np.array(v), np.array(h)
+    edge = 8                                           # 테두리 장식 두께(px)
+    fill = np.median(a_v[20:44, 20:44].reshape(-1, 3), 0).astype(np.uint8)
+    for idx in range(16):
+        up, right, down, left = idx & 1, idx & 2, idx & 4, idx & 8
+        t = np.empty((T, T, 3), np.uint8)
+        t[:] = fill
+        if not left:
+            t[:, :edge] = a_v[:, :edge]
+        if not right:
+            t[:, -edge:] = a_v[:, -edge:]
+        if not up:
+            t[:edge, :] = a_h[:edge, :]
+        if not down:
+            t[-edge:, :] = a_h[-edge:, :]
+        # 바깥 모서리: 두 테두리가 만나는 자리는 세로 테두리 무늬로 맞춤
+        for cond, ys in ((not up, slice(0, edge)), (not down, slice(T - edge, T))):
+            if cond and not left:
+                t[ys, :edge] = a_v[ys, :edge]
+            if cond and not right:
+                t[ys, -edge:] = a_v[ys, -edge:]
+        atlas.paste(Image.fromarray(t), ((WALL_AUTO_AT[0] + idx % 4) * T, (WALL_AUTO_AT[1] + idx // 4) * T))
+
+
+def build_props_2():
+    """비상구 유리문(새 것), 옆벽 문(닫힘/열림)."""
+    out = ROOT / "assets/art/props/interior"
+    meta = json.loads((out / "props.json").read_text(encoding="utf-8"))
+
+    def cut(src, box, k=None, height=None):
+        rgba = key_green(np.array(Image.open(SRC / src).convert("RGB").crop(box)))
+        im = Image.fromarray(rgba, "RGBA")
+        im = im.crop(im.getbbox())
+        im = hq_resize(im, k if k else height / im.height)
+        return im.crop(im.getbbox())
+
+    items = {
+        "exit_door": cut(CORRIDOR_SRC, EXIT_DOOR, height=184),
+        # 옆벽 문: 문틀 기둥 사이 = 타일 2칸 높이. 원본 994px → 128px
+        "side_door_closed": cut(WALLS_SRC, SIDE_DOOR_CLOSED, k=2 * T / 994),
+        "side_door_open": cut(WALLS_SRC, SIDE_DOOR_OPEN, k=2 * T / 994),
+    }
+    for name, im in items.items():
+        im.save(out / f"{name}.png")
+        meta[name] = list(im.size)
+        print(f"  {name}: {im.size[0]}x{im.size[1]}")
+    (out / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+
 if __name__ == "__main__":
     build_tiles()
     build_props()
+    build_props_2()
