@@ -5,7 +5,8 @@
     "story2": "src/seoha_story2.jpg",
     "sit": "src/seoha_sit.jpg",
     "walk2": "src/seoha_walk2.jpg",
-    "walk3": "src/seoha_walk3.jpg"
+    "walk3": "src/seoha_walk3.jpg",
+    "walk_side": "src/seoha_walk_side.jpg"
   },
   "reference": {
     "animation": "idle",
@@ -75,29 +76,29 @@
       "mirror_as": "walk_left",
       "frames": [
         [
-          "walk3",
+          "walk_side",
           0,
           0
         ],
         [
-          "walk3",
+          "walk_side",
           0,
           1
         ],
         [
-          "walk3",
+          "walk_side",
           0,
           2
         ],
         [
-          "walk3",
+          "walk_side",
           0,
           3
         ]
       ],
-      "normalize": false,
+      "normalize": "head",
       "face": 1,
-      "scale_like": "walk_down"
+      "head_ref": "idle_right"
     },
     {
       "name": "idle",
@@ -516,5 +517,21 @@
       ],
       "head_ref": "idle_right"
     }
-  ]
+  ],
+  "erase": {
+    "walk_side": [
+      [
+        630,
+        30,
+        803,
+        215
+      ],
+      [
+        630,
+        215,
+        783,
+        330
+      ]
+    ]
+  }
 }

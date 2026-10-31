@@ -56,9 +56,10 @@ def cut(rgba, box, pad=4):
     y1, x1 = min(rgba.shape[0], y1 + pad), min(rgba.shape[1], x1 + pad)
     crop = rgba[y0:y1, x0:x1].copy()
     lab, n = ndi.label(crop[..., 3] > 20)
-    if n > 1:   # 작은 얼룩 제거
+    if n > 1:   # 캐릭터 본체와 떨어진 얼룩·잔상 제거 (본체의 15% 미만 덩어리)
         sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
-        keep = np.isin(lab, [i + 1 for i, s in enumerate(sizes) if s >= 300])
+        big = max(sizes)
+        keep = np.isin(lab, [i + 1 for i, s in enumerate(sizes) if s >= max(300, big * 0.15)])
         crop[~keep] = 0
     img = Image.fromarray(crop, "RGBA")
     return img.crop(img.getbbox())
@@ -88,6 +89,17 @@ def head_width(img):
     if cols.size < 5:
         return img.width
     return np.percentile(cols, 98) - np.percentile(cols, 2)
+
+
+def hair_height(img):
+    """머리카락 맨 위부터 맨 아래까지의 높이. 옆모습끼리 크기를 비교할 때 쓴다 (폭은 그림마다 들쭉날쭉)."""
+    a = np.array(img).astype(int)
+    r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
+    spread = np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
+    hair = (al > 128) & (spread < 28) & ((r + g + b) / 3 > 90)
+    hair[int(a.shape[0] * 0.6):] = False
+    rows = np.nonzero(hair.sum(1) >= 4)[0]
+    return (rows[-1] - rows[0]) if rows.size else img.height
 
 
 def stature(img):
@@ -142,6 +154,8 @@ def main(cfg_path, out_dir):
     sheets = {}
     for name, path in cfg["sheets"].items():
         rgba = key_green(np.array(Image.open(base / path).convert("RGB")))
+        for x0, y0, x1, y1 in cfg.get("erase", {}).get(name, []):   # 잔상·얼룩 지우기 (원본 좌표)
+            rgba[y0:y1, x0:x1, 3] = 0
         sheets[name] = (rgba, find_frames(rgba))
         print(f"{name}: " + ", ".join(f"{len(r)}칸" for r in sheets[name][1]))
 
@@ -177,7 +191,7 @@ def main(cfg_path, out_dir):
         fr = raw[anim["name"]]
         if how == "head":
             ref = anim.get("head_ref")
-            if ref:                  # 옆모습끼리 비교 (옆에서 본 머리는 폭이 다름)
+            if ref:                  # 옆모습끼리 머리 높이로 비교
                 pending.append(anim)
                 continue
             factor[anim["name"]] = ref_head / np.median([head_width(f) for f in fr])
@@ -185,8 +199,8 @@ def main(cfg_path, out_dir):
             factor[anim["name"]] = ref_stature / np.median([stature(f) for f in fr])
     for anim in pending:
         ref = anim["head_ref"]
-        ref_w = np.median([head_width(f) for f in raw[ref]])
-        factor[anim["name"]] = factor.get(ref, 1.0) * ref_w / np.median([head_width(f) for f in raw[anim["name"]]])
+        ref_h = np.median([hair_height(f) for f in raw[ref]])
+        factor[anim["name"]] = factor.get(ref, 1.0) * ref_h / np.median([hair_height(f) for f in raw[anim["name"]]])
     scaled = {}
     for anim in cfg["animations"]:
         fr = raw[anim["name"]]
