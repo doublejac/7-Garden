@@ -2,7 +2,7 @@
 
 1) 초록 배경 제거 (가장자리 반투명 처리 + 초록 번짐 제거)
 2) 격자 순서대로 프레임 자동 인식 (줄 → 칸)
-3) 서 있는 동작은 '머리 꼭대기~발바닥' 높이로 캐릭터 크기 통일 (앉은 동작은 normalize: false)
+3) 서 있는 동작은 '머리 꼭대기~발바닥' 높이로 캐릭터 크기 통일 (정면 앉은 동작은 normalize: "head"로 머리 폭, 그 밖은 scale_like로 다른 동작 배율을 빌림)
 4) 조개 핀이 반대쪽에 그려진 프레임, 옆모습에서 반대 방향을 보는 프레임 좌우 반전
 5) 같은 크기 칸, 발바닥 기준 정렬 → 동작별 PNG + frames.json
 
@@ -168,11 +168,25 @@ def main(cfg_path, out_dir):
     # 2차: 머리 폭 기준으로 크기 통일
     ref_anim = cfg["reference"]["animation"]
     ref_stature = np.median([stature(f) for f in raw[ref_anim]])
+    ref_head = np.median([head_width(f) for f in raw[ref_anim]])
     ref_scale = cfg["reference"]["height"] / np.median([f.height for f in raw[ref_anim]])
     factor = {}
+    pending = []
     for anim in cfg["animations"]:
-        if anim.get("normalize", True):
-            factor[anim["name"]] = ref_stature / np.median([stature(f) for f in raw[anim["name"]]])
+        how = anim.get("normalize", True)
+        fr = raw[anim["name"]]
+        if how == "head":
+            ref = anim.get("head_ref")
+            if ref:                  # 옆모습끼리 비교 (옆에서 본 머리는 폭이 다름)
+                pending.append(anim)
+                continue
+            factor[anim["name"]] = ref_head / np.median([head_width(f) for f in fr])
+        elif how:
+            factor[anim["name"]] = ref_stature / np.median([stature(f) for f in fr])
+    for anim in pending:
+        ref = anim["head_ref"]
+        ref_w = np.median([head_width(f) for f in raw[ref]])
+        factor[anim["name"]] = factor.get(ref, 1.0) * ref_w / np.median([head_width(f) for f in raw[anim["name"]]])
     scaled = {}
     for anim in cfg["animations"]:
         fr = raw[anim["name"]]

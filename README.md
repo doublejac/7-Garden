@@ -36,11 +36,13 @@ tests/         test_runner.tscn  자동 점검
 
 ## 캐릭터 스프라이트
 - `scenes/characters/seoha.tscn`: 서하 (AnimatedSprite2D). 발바닥이 노드 위치에 오도록 맞춰져 있습니다.
-- `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기, 숫자키로 특수 동작.
+- `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기(Shift: 살금살금), 숫자키와 Q·W·E·R로 특수 동작.
 - 이동: walk_down / walk_up / walk_left / walk_right, 대기: idle / idle_up / idle_left / idle_right
   (멈추면 마지막으로 바라본 방향의 대기 동작이 재생됩니다)
-- 특수: take_pill, fake_swallow, startle, step_back_left/right, cry, sad, piano, happy, wave, point_left/right
-- 원본: `tools/sprite_cleanup/src/` 의 Gemini 시트 2장 (단색 초록 배경)
+- 살금살금: sneak_left / sneak_right (`walk(dir, true)`)
+- 특수: take_pill, hide_pill, fake_swallow, startle, step_back_left/right, cry, sad, crouch_look, happy, wave, point_left/right
+- 앉기: sit_bench, write, piano (피아노·책상 같은 소품은 따로 배치)
+- 원본: `tools/sprite_cleanup/src/` 의 Gemini 시트 4장 (단색 초록 배경)
 - 정리: `python3 tools/sprite_cleanup/clean_chroma.py tools/sprite_cleanup/seoha_v2.json assets/art/characters/seoha`
   → 초록 배경 제거, 조개 핀 위치 맞춤, 캐릭터 크기 통일, 발바닥 정렬. 프레임 위치는 json에 (시트, 줄, 칸)으로 적습니다.
   체크무늬 배경 시트는 `clean_sheet.py`를 씁니다. 두 스크립트 모두 Python과 numpy, scipy, Pillow가 필요합니다.

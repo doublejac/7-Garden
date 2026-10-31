@@ -7,7 +7,8 @@ extends AnimatedSprite2D
 var facing := "down"
 
 
-func walk(move_dir: Vector2) -> void:
+## sneak = true이면 살금살금 걷기 (옆모습만 있음. 위·아래는 보통 걷기로)
+func walk(move_dir: Vector2, sneak := false) -> void:
 	if move_dir == Vector2.ZERO:
 		stand()
 		return
@@ -15,7 +16,8 @@ func walk(move_dir: Vector2) -> void:
 		facing = "right" if move_dir.x > 0 else "left"
 	else:
 		facing = "down" if move_dir.y > 0 else "up"
-	play("walk_" + facing)
+	var anim := ("sneak_" if sneak else "walk_") + facing
+	play(anim if sprite_frames.has_animation(anim) else "walk_" + facing)
 
 
 func stand() -> void:
