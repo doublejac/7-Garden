@@ -44,7 +44,6 @@ RUNNER_H_AT = (3, 5)         # 러너를 90도 돌린 가로 복도용
 EXIT_DOOR = (1034, 527, 2012, 1519)
 WALLS_SRC = "side_doors_walls.jpg"
 SIDE_DOOR_CLOSED = (245, 20, 342, 1014)
-SIDE_DOOR_OPEN = (1034, 20, 2007, 1014)
 WALL_TOP_V = (26, 1034, 512, 1522)
 WALL_TOP_H = (532, 1034, 1014, 1522)
 WALL_AUTO_AT = (6, 5)        # 벽 윗면 자동 타일 16종 (4×4). 번호 = 위1 + 오른쪽2 + 아래4 + 왼쪽8 (그쪽도 벽이면 켜짐)
@@ -170,6 +169,23 @@ def build_tiles_2(atlas):
         atlas.paste(Image.fromarray(t), ((WALL_AUTO_AT[0] + idx % 4) * T, (WALL_AUTO_AT[1] + idx // 4) * T))
 
 
+def open_door(closed):
+    """닫힌 옆문에서 열린 문을 만든다: 문틀 기둥은 그대로, 문짝만 위 기둥에서 방 쪽(오른쪽)으로 90도 돌림.
+    (Gemini가 그린 열린 문은 기둥이 네 개라 닫힌 문과 모양이 달라서 쓰지 않음)"""
+    a = np.array(closed)
+    wide = (a[..., 3] > 100).sum(1) >= a.shape[1] - 2      # 기둥 줄 (폭이 꽉 찬 줄)
+    rows = np.nonzero(~wide)[0]
+    p0, p1 = rows[0], rows[-1] + 1                          # 문짝 구간
+    leaf = closed.crop((0, p0, closed.width, p1))
+    leaf = leaf.crop(leaf.getbbox()).transpose(Image.ROTATE_90)   # 세로 → 가로
+    out = Image.new("RGBA", (closed.width + leaf.width, closed.height), (0, 0, 0, 0))
+    posts = a.copy()
+    posts[p0:p1] = 0
+    out.alpha_composite(Image.fromarray(posts, "RGBA"), (0, 0))
+    out.alpha_composite(leaf, (closed.width, p0 - leaf.height // 2))
+    return out
+
+
 def build_props_2():
     """비상구 유리문(새 것), 옆벽 문(닫힘/열림)."""
     out = ROOT / "assets/art/props/interior"
@@ -186,8 +202,8 @@ def build_props_2():
         "exit_door": cut(CORRIDOR_SRC, EXIT_DOOR, height=184),
         # 옆벽 문: 문틀 기둥 사이 = 타일 2칸 높이. 원본 994px → 128px
         "side_door_closed": cut(WALLS_SRC, SIDE_DOOR_CLOSED, k=2 * T / 994),
-        "side_door_open": cut(WALLS_SRC, SIDE_DOOR_OPEN, k=2 * T / 994),
     }
+    items["side_door_open"] = open_door(items["side_door_closed"])
     for name, im in items.items():
         im.save(out / f"{name}.png")
         meta[name] = list(im.size)

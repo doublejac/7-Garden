@@ -51,10 +51,10 @@ const FLOORS := {
 }
 # 복도 바닥 후보 (C 키로 바꿔 봄). 세로 복도(,)·가로 복도(_)에 깔린다
 const CORRIDORS := [
+	["꽃무늬 타일 (확정)", [Vector2i(8, 2), 2, 0, 0], [Vector2i(8, 2), 2, 0, 0]],
 	["러너 카펫", [Vector2i(0, 5), 3, 10, 0], [Vector2i(3, 5), 3, 0, 24]],
 	["헤링본 마루", [Vector2i(10, 0), 2, 0, 0], [Vector2i(10, 0), 2, 0, 0]],
 	["대리석", [Vector2i(8, 0), 2, 0, 0], [Vector2i(8, 0), 2, 0, 0]],
-	["꽃무늬 타일", [Vector2i(8, 2), 2, 0, 0], [Vector2i(8, 2), 2, 0, 0]],
 	["회색 타일 (처음 것)", [Vector2i(4, 0), 2, 0, 0], [Vector2i(4, 0), 2, 0, 0]],
 ]
 const WALL_FACE := Vector2i(4, 2)   # 2칸 폭 × 3칸 높이
@@ -210,18 +210,19 @@ func _add_door(parent: Node2D, d: Array) -> void:
 	parent.add_child(node)
 	var closed := _sprite("side_door_closed")
 	closed.offset = Vector2((TILE - closed.texture.get_width()) / 2.0, -closed.texture.get_height())
-	var opened := _sprite("side_door_open")
-	opened.offset = Vector2(0, -opened.texture.get_height())
-	if d[2] < 0:   # 왼쪽 방으로 열림: 좌우 반전, 문틀이 벽 칸에 오도록
+	var opened := _sprite("side_door_open")   # 같은 기둥 + 위 기둥에서 방 쪽으로 돌아간 문짝
+	var post_x := closed.offset.x
+	opened.offset = Vector2(post_x, -opened.texture.get_height())
+	if d[2] < 0:   # 왼쪽 방으로 열림: 좌우 반전, 기둥 위치는 닫힌 문과 같게
 		opened.flip_h = true
-		opened.offset.x = TILE - opened.texture.get_width()
+		opened.offset.x = post_x + closed.texture.get_width() - opened.texture.get_width()
 	node.add_child(closed)
 	node.add_child(opened)
 	var body := StaticBody2D.new()
 	body.add_child(_box(Rect2(Vector2(0, -2 * TILE), Vector2(TILE, 2 * TILE))))
 	node.add_child(body)
 	var door := {"node": node, "closed": closed, "opened": opened, "body": body,
-		"center": Vector2(x + 0.5, y + 1.0) * TILE}
+		"center": Vector2(x + 0.5, y + 1.0) * TILE, "rect": Rect2(Vector2(x, y) * TILE, Vector2(TILE, 2 * TILE))}
 	doors.append(door)
 	_set_door(door, d[3])
 
@@ -242,8 +243,15 @@ func _toggle_nearest_door() -> void:
 		if dist < best_d:
 			best_d = dist
 			best = door
-	if not best.is_empty():
-		_set_door(best, not best["open"])
+	if best.is_empty():
+		return
+	if best["open"] and _player_rect().intersects(best["rect"]):
+		return   # 문 자리에 서 있으면 닫지 않음 (갇힘 방지)
+	_set_door(best, not best["open"])
+
+
+func _player_rect() -> Rect2:
+	return Rect2(player.position + Vector2(-20, -18), Vector2(40, 18))   # 서하 발 충돌 상자
 
 
 # ── 타일 ──────────────────────────────────────────────────
