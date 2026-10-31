@@ -8,5 +8,5 @@ sprite_frames = ExtResource("2_frames")
 animation = &"idle"
 autoplay = "idle"
 texture_filter = 2
-offset = Vector2(0, -75)
+offset = Vector2(0, -76.5)
 script = ExtResource("1_script")
