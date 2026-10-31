@@ -1,5 +1,10 @@
 ; Engine configuration file.
-; Godot 4.7에서 열면 에디터가 이 파일을 자동으로 정리해 다시 저장합니다.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
