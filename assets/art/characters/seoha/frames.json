@@ -1,13 +1,13 @@
 {
   "cell": [
-    106,
+    108,
     159
   ],
   "animations": {
     "idle": {
       "frames": 8,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 3,
@@ -16,7 +16,7 @@
     "idle_up": {
       "frames": 4,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 3,
@@ -25,7 +25,7 @@
     "idle_right": {
       "frames": 8,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 3,
@@ -34,7 +34,7 @@
     "idle_left": {
       "frames": 8,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 3,
@@ -43,7 +43,7 @@
     "walk_down": {
       "frames": 4,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 6,
@@ -52,7 +52,7 @@
     "walk_up": {
       "frames": 4,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 6,
@@ -61,7 +61,7 @@
     "walk_right": {
       "frames": 4,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 6,
@@ -70,10 +70,64 @@
     "walk_left": {
       "frames": 4,
       "cell": [
-        106,
+        108,
         159
       ],
       "fps": 6,
+      "loop": true
+    },
+    "take_pill": {
+      "frames": 4,
+      "cell": [
+        108,
+        159
+      ],
+      "fps": 2,
+      "loop": false
+    },
+    "hide_pill": {
+      "frames": 4,
+      "cell": [
+        108,
+        159
+      ],
+      "fps": 2,
+      "loop": false
+    },
+    "startle": {
+      "frames": 4,
+      "cell": [
+        108,
+        159
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "cry": {
+      "frames": 6,
+      "cell": [
+        108,
+        159
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "cry_right": {
+      "frames": 6,
+      "cell": [
+        108,
+        159
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "cry_left": {
+      "frames": 6,
+      "cell": [
+        108,
+        159
+      ],
+      "fps": 3,
       "loop": true
     }
   }

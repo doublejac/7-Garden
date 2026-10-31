@@ -36,9 +36,10 @@ tests/         test_runner.tscn  자동 점검
 
 ## 캐릭터 스프라이트
 - `scenes/characters/seoha.tscn`: 서하 (AnimatedSprite2D). 발바닥이 노드 위치에 오도록 맞춰져 있습니다.
-- `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기.
+- `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기, 숫자키로 특수 동작.
 - **v3 (다시 만드는 중)**: 기준 그림 `tools/sprite_cleanup/src/v3/seoha_reference.jpg`, 기본 이동 시트 `seoha_base.jpg`
-  - 지금 들어 있는 동작: walk_down / walk_up / walk_left / walk_right, idle / idle_up / idle_left / idle_right
+  - 지금 들어 있는 동작: walk_down / walk_up / walk_left / walk_right, idle / idle_up / idle_left / idle_right,
+    take_pill, hide_pill, startle, cry, cry_left / cry_right (`seoha_story1.jpg`)
   - 기본 이동 시트가 그림체·비율의 기준. 추가 동작 시트는 이 시트를 첨부해서 같은 머리 크기로 받는다.
 - 정리: `python3 tools/sprite_cleanup/clean_chroma.py tools/sprite_cleanup/seoha_v3.json assets/art/characters/seoha`
   → 초록 배경 제거, 조개 핀 위치·옆모습 방향 맞춤, 크기 통일, 발바닥 정렬. 프레임 위치는 json에 (시트, 줄, 칸)으로 적습니다.

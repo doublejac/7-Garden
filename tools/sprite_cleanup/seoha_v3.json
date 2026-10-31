@@ -1,6 +1,7 @@
 {
   "sheets": {
-    "base": "src/v3/seoha_base.jpg"
+    "base": "src/v3/seoha_base.jpg",
+    "story1": "src/v3/seoha_story1.jpg"
   },
   "reference": {
     "animation": "idle",
@@ -220,6 +221,175 @@
         ]
       ],
       "scale_like": "idle"
+    },
+    {
+      "name": "take_pill",
+      "fps": 2,
+      "loop": false,
+      "pin": 1,
+      "normalize": false,
+      "scale_like": "idle",
+      "frames": [
+        [
+          "story1",
+          0,
+          0
+        ],
+        [
+          "story1",
+          0,
+          1
+        ],
+        [
+          "story1",
+          0,
+          2
+        ],
+        [
+          "story1",
+          0,
+          3
+        ]
+      ]
+    },
+    {
+      "name": "hide_pill",
+      "fps": 2,
+      "loop": false,
+      "pin": 1,
+      "normalize": false,
+      "scale_like": "idle",
+      "frames": [
+        [
+          "story1",
+          2,
+          0
+        ],
+        [
+          "story1",
+          2,
+          1
+        ],
+        [
+          "story1",
+          2,
+          2
+        ],
+        [
+          "story1",
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "name": "startle",
+      "fps": 4,
+      "loop": false,
+      "pin": 1,
+      "normalize": false,
+      "scale_like": "idle",
+      "frames": [
+        [
+          "story1",
+          3,
+          0
+        ],
+        [
+          "story1",
+          3,
+          1
+        ],
+        [
+          "story1",
+          3,
+          2
+        ],
+        [
+          "story1",
+          3,
+          3
+        ]
+      ]
+    },
+    {
+      "name": "cry",
+      "fps": 3,
+      "pin": 1,
+      "normalize": false,
+      "scale_like": "idle",
+      "frames": [
+        [
+          "story1",
+          4,
+          0
+        ],
+        [
+          "story1",
+          4,
+          1
+        ],
+        [
+          "story1",
+          4,
+          2
+        ],
+        [
+          "story1",
+          4,
+          3
+        ],
+        [
+          "story1",
+          4,
+          2
+        ],
+        [
+          "story1",
+          4,
+          3
+        ]
+      ]
+    },
+    {
+      "name": "cry_right",
+      "fps": 3,
+      "face": 1,
+      "mirror_as": "cry_left",
+      "normalize": false,
+      "scale_like": "idle",
+      "frames": [
+        [
+          "story1",
+          5,
+          0
+        ],
+        [
+          "story1",
+          5,
+          1
+        ],
+        [
+          "story1",
+          5,
+          2
+        ],
+        [
+          "story1",
+          5,
+          3
+        ],
+        [
+          "story1",
+          5,
+          2
+        ],
+        [
+          "story1",
+          5,
+          3
+        ]
+      ]
     }
   ]
 }
