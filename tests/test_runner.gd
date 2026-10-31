@@ -4,12 +4,16 @@
 # 1) 1회차를 첫 번째·마지막 선택지로 각각 끝까지 돌려 일차별 평온도가 49/58/67/76인지 확인
 # 2) 2회차를 붉은 선택지 우선으로 돌려 오류 없이 끝나는지 확인
 # 3) 저장 → 값 변경 → 불러오기로 상태가 복원되는지 확인
+#
+# 에디터에서 F6으로 실행하면 결과가 창에 표시되고, 창을 닫을 때까지 유지된다.
+# 헤드리스(명령줄)로 실행하면 결과를 출력한 뒤 자동으로 종료한다.
 extends Node
 
 const EXPECTED_LOOP1_PEACE := {1: 49, 2: 58, 3: 67, 4: 76}
 const LAST_DAY := 4
 
 var failures := 0
+var _log := PackedStringArray()
 
 
 func _ready() -> void:
@@ -17,8 +21,33 @@ func _ready() -> void:
 		_play_loop(1, strategy, true)
 	_play_loop(2, "red", false)
 	_test_save_load()
-	print("\n결과: %s (실패 %d건)" % ["통과" if failures == 0 else "실패", failures])
-	get_tree().quit(1 if failures > 0 else 0)
+	_out("")
+	_out("결과: %s (실패 %d건)" % ["통과" if failures == 0 else "실패", failures])
+	if DisplayServer.get_name() == "headless":
+		get_tree().quit(1 if failures > 0 else 0)
+	else:
+		_show_on_screen()
+
+
+func _out(line: String) -> void:
+	print(line)
+	_log.append(line)
+
+
+func _show_on_screen() -> void:
+	var bg := ColorRect.new()
+	bg.color = Color("#1e1f24")
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+	var text := RichTextLabel.new()
+	text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 24)
+	text.bbcode_enabled = true
+	text.add_theme_font_size_override("normal_font_size", 16)
+	var body := "\n".join(_log)
+	body = body.replace("[OK]", "[color=#7fd17f][OK][/color]").replace("[실패]", "[color=#ff5a5a][실패][/color]")
+	text.text = body
+	bg.add_child(text)
+	text.scroll_to_line(text.get_line_count() - 1)
 
 
 func _play_loop(loop: int, strategy: String, check_peace: bool) -> void:
@@ -56,7 +85,7 @@ func _play_loop(loop: int, strategy: String, check_peace: bool) -> void:
 		if check_peace:
 			_check(GameState.peace == EXPECTED_LOOP1_PEACE[day],
 				"%d회차 %d일 차 종료 평온도 %d (기대값 %d, %s)" % [loop, day, GameState.peace, EXPECTED_LOOP1_PEACE[day], strategy])
-	print("  %d회차 [%s] 대사 %d줄, 선택 %d번 → 평온도 %d 의심도 %d 자아 %d 약 거부 %d" % [
+	_out("  %d회차 [%s] 대사 %d줄, 선택 %d번 → 평온도 %d 의심도 %d 자아 %d 약 거부 %d" % [
 		loop, strategy, state.lines, state.choices, GameState.peace, GameState.suspicion,
 		GameState.clarity, GameState.pills_skipped])
 
@@ -82,7 +111,7 @@ func _test_save_load() -> void:
 
 func _check(ok: bool, what: String) -> void:
 	if ok:
-		print("  [OK] " + what)
+		_out("  [OK] " + what)
 	else:
 		failures += 1
-		print("  [실패] " + what)
+		_out("  [실패] " + what)
