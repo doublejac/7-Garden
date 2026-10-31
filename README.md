@@ -42,6 +42,7 @@ tests/         test_runner.tscn  자동 점검
   (이 스크립트는 Python과 numpy, scipy, Pillow가 필요합니다.)
   새 시트를 넣을 때는 설정 파일(예: `seoha.json`)에 프레임 위치를 적고 같은 도구로 정리한 뒤,
   `godot --headless --path . -s res://tools/build_spriteframes.gd -- 캐릭터폴더이름` 으로 애니메이션 리소스를 만듭니다.
+- Gemini 옆모습은 모든 프레임이 다리를 벌린 같은 자세라서, `tools/sprite_cleanup/side_walk_fix.py`로 2·4번째 프레임의 다리를 모아 걷는 동작을 만들었습니다. 새 캐릭터 옆모습도 같은 도구를 쓰면 됩니다.
 - 서하 노드는 텍스처 필터가 Linear로 지정되어 있습니다. 원본 그림체를 살리기 위해 1배 크기로 쓰는 것을 기준으로 합니다.
 
 ## 아직 할 일
