@@ -5,12 +5,12 @@
   ],
   "animations": {
     "walk_down": {
-      "frames": 4,
+      "frames": 2,
       "cell": [
         128,
         160
       ],
-      "fps": 8,
+      "fps": 5,
       "loop": true
     },
     "walk_up": {
@@ -23,21 +23,21 @@
       "loop": true
     },
     "walk_right": {
-      "frames": 4,
+      "frames": 2,
       "cell": [
         128,
         160
       ],
-      "fps": 8,
+      "fps": 5,
       "loop": true
     },
     "walk_left": {
-      "frames": 4,
+      "frames": 2,
       "cell": [
         128,
         160
       ],
-      "fps": 8,
+      "fps": 5,
       "loop": true
     },
     "idle": {

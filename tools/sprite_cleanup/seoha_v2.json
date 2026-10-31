@@ -10,7 +10,7 @@
   "animations": [
     {
       "name": "walk_down",
-      "fps": 8,
+      "fps": 5,
       "pin": 1,
       "frames": [
         [
@@ -22,16 +22,6 @@
           "basic",
           0,
           1
-        ],
-        [
-          "basic",
-          0,
-          2
-        ],
-        [
-          "basic",
-          0,
-          3
         ]
       ],
       "normalize": true
@@ -66,23 +56,13 @@
     },
     {
       "name": "walk_right",
-      "fps": 8,
+      "fps": 5,
       "mirror_as": "walk_left",
       "frames": [
         [
           "basic",
           2,
-          0
-        ],
-        [
-          "basic",
-          2,
           1
-        ],
-        [
-          "basic",
-          2,
-          2
         ],
         [
           "basic",
