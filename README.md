@@ -47,6 +47,12 @@ tests/         test_runner.tscn  자동 점검
 - 애니메이션 리소스 만들기: `godot --headless --path . -s res://tools/build_spriteframes.gd -- seoha`
 - 서하 노드는 텍스처 필터가 Linear입니다. 1배 크기로 쓰는 것을 기준으로 합니다.
 
+## 맵 테스트
+- `scenes/dev/map_test.tscn`: 64px 타일 크기 확인용 임시 맵 (서하 방, 병동 복도, 중앙 복도 일부). F6으로 실행.
+  - 방향키 걷기 · T 시간대(아침/낮/저녁/밤) · Z 75% 확대/원래대로 · G 격자 · Esc 끝내기
+  - 그림은 임시 색 블록. 배치는 `map_test.gd` 맨 위 `LAYOUT` 문자열을 고치면 바로 바뀝니다.
+  - 맵 전체 설계는 '해무장 맵 설계서' 문서 참고.
+
 ## 아직 할 일
 - 한글 폰트: 지금은 운영체제 기본 폰트로 한글을 표시합니다. 배포 전에 Pretendard나 Noto Sans KR 같은 무료 폰트를 `assets/fonts/`에 넣고 테마에 지정해야 합니다.
 - 연출 키(`fx` 열)는 글리치 깜빡임과 채도만 연결되어 있고, 나머지는 화면 위 표시줄에 키 이름만 표시됩니다.
