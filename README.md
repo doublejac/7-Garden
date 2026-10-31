@@ -42,7 +42,7 @@ tests/         test_runner.tscn  자동 점검
 - 살금살금: sneak_left / sneak_right (`walk(dir, true)`)
 - 특수: take_pill, hide_pill, fake_swallow, startle, step_back_left/right, cry, sad, crouch_look, happy, wave, point_left/right
 - 앉기: sit_bench, write, piano (피아노·책상 같은 소품은 따로 배치)
-- 원본: `tools/sprite_cleanup/src/` 의 Gemini 시트 7장 (단색 초록 배경)
+- 원본: `tools/sprite_cleanup/src/` 의 Gemini 시트 8장 (단색 초록 배경)
 - 정리: `python3 tools/sprite_cleanup/clean_chroma.py tools/sprite_cleanup/seoha_v2.json assets/art/characters/seoha`
   → 초록 배경 제거, 조개 핀 위치 맞춤, 캐릭터 크기 통일, 발바닥 정렬. 프레임 위치는 json에 (시트, 줄, 칸)으로 적습니다.
   체크무늬 배경 시트는 `clean_sheet.py`를 씁니다. 두 스크립트 모두 Python과 numpy, scipy, Pillow가 필요합니다.

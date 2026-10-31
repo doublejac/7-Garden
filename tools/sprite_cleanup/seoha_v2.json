@@ -6,7 +6,8 @@
     "sit": "src/seoha_sit.jpg",
     "walk2": "src/seoha_walk2.jpg",
     "walk3": "src/seoha_walk3.jpg",
-    "walk_side2": "src/seoha_walk_side2.jpg"
+    "walk_side2": "src/seoha_walk_side2.jpg",
+    "walk_back": "src/seoha_walk_back.jpg"
   },
   "reference": {
     "animation": "idle",
@@ -47,28 +48,28 @@
       "pin": -1,
       "frames": [
         [
-          "walk3",
-          2,
+          "walk_back",
+          0,
           0
         ],
         [
-          "walk3",
-          2,
+          "walk_back",
+          0,
           1
         ],
         [
-          "walk3",
-          2,
+          "walk_back",
+          0,
           2
         ],
         [
-          "walk3",
-          2,
+          "walk_back",
+          0,
           3
         ]
       ],
-      "normalize": false,
-      "scale_like": "walk_down"
+      "normalize": "head",
+      "head_ref": "idle_up"
     },
     {
       "name": "walk_right",
