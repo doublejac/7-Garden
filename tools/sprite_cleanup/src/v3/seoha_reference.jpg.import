@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dkhlp2tgcqlp6"
-path="res://.godot/imported/step_back_right.png-27321bfcde15fd22b04944f15c4e6a6a.ctex"
+uid="uid://bueeyx1ttu5rm"
+path="res://.godot/imported/seoha_reference.jpg-0766f0b135a12e0694b4a2daba4f54f9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/seoha/step_back_right.png"
-dest_files=["res://.godot/imported/step_back_right.png-27321bfcde15fd22b04944f15c4e6a6a.ctex"]
+source_file="res://tools/sprite_cleanup/src/v3/seoha_reference.jpg"
+dest_files=["res://.godot/imported/seoha_reference.jpg-0766f0b135a12e0694b4a2daba4f54f9.ctex"]
 
 [params]
 

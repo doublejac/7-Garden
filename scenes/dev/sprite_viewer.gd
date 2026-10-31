@@ -46,6 +46,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE:
 			get_tree().quit()
-		elif SPECIAL.has(event.keycode):
+		elif SPECIAL.has(event.keycode) and seoha.sprite_frames.has_animation(SPECIAL[event.keycode]):
 			_special = true
 			seoha.play(SPECIAL[event.keycode])

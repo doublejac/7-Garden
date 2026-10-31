@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://mbxhetoi6stw"
-path="res://.godot/imported/happy.png-d1edaef2a41a9ba0a8701dc3888eaa7f.ctex"
+uid="uid://b14444c5wr6uf"
+path="res://.godot/imported/seoha_base.jpg-956f39cdd47a00f213a3d863e28a0964.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/seoha/happy.png"
-dest_files=["res://.godot/imported/happy.png-d1edaef2a41a9ba0a8701dc3888eaa7f.ctex"]
+source_file="res://tools/sprite_cleanup/src/v3/seoha_base.jpg"
+dest_files=["res://.godot/imported/seoha_base.jpg-956f39cdd47a00f213a3d863e28a0964.ctex"]
 
 [params]
 

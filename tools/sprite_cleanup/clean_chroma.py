@@ -96,7 +96,8 @@ def hair_height(img):
     a = np.array(img).astype(int)
     r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
     spread = np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
-    hair = (al > 128) & (spread < 28) & ((r + g + b) / 3 > 90)
+    lum = (r + g + b) / 3
+    hair = (al > 128) & (spread < 28) & (lum > 90) & (lum < 228)   # 흰 원피스(거의 흰색)는 제외
     hair[int(a.shape[0] * 0.6):] = False
     rows = np.nonzero(hair.sum(1) >= 4)[0]
     return (rows[-1] - rows[0]) if rows.size else img.height
