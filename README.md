@@ -34,6 +34,16 @@ tests/         test_runner.tscn  자동 점검
 
 대사나 수치를 고친 뒤에는 이 점검을 한 번 돌려보세요.
 
+## 캐릭터 스프라이트
+- `scenes/characters/seoha.tscn`: 서하 (AnimatedSprite2D). 발바닥이 노드 위치에 오도록 맞춰져 있습니다.
+- `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기, 1~5로 특수 모션.
+- 애니메이션: walk_down / walk_up / walk_left / walk_right / idle / wave / point / worry / sit_draw / sit_bench
+- 원본은 Gemini 시트이며, `tools/sprite_cleanup/clean_sheet.py`로 배경 제거, 절반 크기 고품질 축소, 동작별 키 맞춤, 프레임 정렬을 했습니다.
+  (이 스크립트는 Python과 numpy, scipy, Pillow가 필요합니다.)
+  새 시트를 넣을 때는 설정 파일(예: `seoha.json`)에 프레임 위치를 적고 같은 도구로 정리한 뒤,
+  `godot --headless --path . -s res://tools/build_spriteframes.gd -- 캐릭터폴더이름` 으로 애니메이션 리소스를 만듭니다.
+- 서하 노드는 텍스처 필터가 Linear로 지정되어 있습니다. 원본 그림체를 살리기 위해 1배 크기로 쓰는 것을 기준으로 합니다.
+
 ## 아직 할 일
 - 한글 폰트: 지금은 운영체제 기본 폰트로 한글을 표시합니다. 배포 전에 Pretendard나 Noto Sans KR 같은 무료 폰트를 `assets/fonts/`에 넣고 테마에 지정해야 합니다.
 - 연출 키(`fx` 열)는 글리치 깜빡임과 채도만 연결되어 있고, 나머지는 화면 위 표시줄에 키 이름만 표시됩니다.

@@ -1,0 +1,98 @@
+{
+  "cell": [
+    222,
+    207
+  ],
+  "animations": {
+    "walk_down": {
+      "frames": 3,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 6,
+      "loop": true
+    },
+    "walk_up": {
+      "frames": 3,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 6,
+      "loop": true
+    },
+    "walk_left": {
+      "frames": 4,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "walk_right": {
+      "frames": 4,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "idle": {
+      "frames": 3,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "wave": {
+      "frames": 1,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "point": {
+      "frames": 1,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "worry": {
+      "frames": 2,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "sit_draw": {
+      "frames": 5,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "sit_bench": {
+      "frames": 2,
+      "cell": [
+        222,
+        207
+      ],
+      "fps": 2,
+      "loop": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/characters/character_sprite.gd" id="1_script"]
+[ext_resource type="SpriteFrames" path="res://assets/art/characters/seoha/seoha_frames.tres" id="2_frames"]
+
+[node name="Seoha" type="AnimatedSprite2D"]
+sprite_frames = ExtResource("2_frames")
+animation = &"idle"
+autoplay = "idle"
+texture_filter = 2
+offset = Vector2(0, -101.5)
+script = ExtResource("1_script")
