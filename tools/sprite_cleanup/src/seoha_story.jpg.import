@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://pjmeanmi0m04"
-path="res://.godot/imported/sit_draw.png-3f10d9f17922f1cee854da4766997e79.ctex"
+uid="uid://dy1oqwb8c8nxc"
+path="res://.godot/imported/seoha_story.jpg-6a962031dbafe5063aaddaef860ea98a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/seoha/sit_draw.png"
-dest_files=["res://.godot/imported/sit_draw.png-3f10d9f17922f1cee854da4766997e79.ctex"]
+source_file="res://tools/sprite_cleanup/src/seoha_story.jpg"
+dest_files=["res://.godot/imported/seoha_story.jpg-6a962031dbafe5063aaddaef860ea98a.ctex"]
 
 [params]
 

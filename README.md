@@ -36,15 +36,16 @@ tests/         test_runner.tscn  자동 점검
 
 ## 캐릭터 스프라이트
 - `scenes/characters/seoha.tscn`: 서하 (AnimatedSprite2D). 발바닥이 노드 위치에 오도록 맞춰져 있습니다.
-- `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기, 1~5로 특수 모션.
-- 애니메이션: walk_down / walk_up / walk_left / walk_right / idle / idle_up / idle_left / idle_right / wave / point / worry / sit_draw / sit_bench
-- 멈추면 마지막으로 바라본 방향의 대기 동작이 재생됩니다. 옆·뒤 대기 동작과 조개 핀 위치 고정은 `tools/sprite_cleanup/make_idles.py`로 만들었습니다.
-- 원본은 Gemini 시트이며, `tools/sprite_cleanup/clean_sheet.py`로 배경 제거, 절반 크기 고품질 축소, 동작별 키 맞춤, 프레임 정렬을 했습니다.
-  (이 스크립트는 Python과 numpy, scipy, Pillow가 필요합니다.)
-  새 시트를 넣을 때는 설정 파일(예: `seoha.json`)에 프레임 위치를 적고 같은 도구로 정리한 뒤,
-  `godot --headless --path . -s res://tools/build_spriteframes.gd -- 캐릭터폴더이름` 으로 애니메이션 리소스를 만듭니다.
-- Gemini 옆모습은 모든 프레임이 다리를 벌린 같은 자세라서, `tools/sprite_cleanup/side_walk_fix.py`로 2·4번째 프레임의 다리를 모아 걷는 동작을 만들었습니다. 새 캐릭터 옆모습도 같은 도구를 쓰면 됩니다.
-- 서하 노드는 텍스처 필터가 Linear로 지정되어 있습니다. 원본 그림체를 살리기 위해 1배 크기로 쓰는 것을 기준으로 합니다.
+- `scenes/dev/sprite_viewer.tscn`: 확인용 씬. F6으로 실행 후 방향키로 걷기, 숫자키로 특수 동작.
+- 이동: walk_down / walk_up / walk_left / walk_right, 대기: idle / idle_up / idle_left / idle_right
+  (멈추면 마지막으로 바라본 방향의 대기 동작이 재생됩니다)
+- 특수: take_pill, fake_swallow, startle, step_back_left/right, cry, sad, piano, happy, wave, point_left/right
+- 원본: `tools/sprite_cleanup/src/` 의 Gemini 시트 2장 (단색 초록 배경)
+- 정리: `python3 tools/sprite_cleanup/clean_chroma.py tools/sprite_cleanup/seoha_v2.json assets/art/characters/seoha`
+  → 초록 배경 제거, 조개 핀 위치 맞춤, 캐릭터 크기 통일, 발바닥 정렬. 프레임 위치는 json에 (시트, 줄, 칸)으로 적습니다.
+  체크무늬 배경 시트는 `clean_sheet.py`를 씁니다. 두 스크립트 모두 Python과 numpy, scipy, Pillow가 필요합니다.
+- 애니메이션 리소스 만들기: `godot --headless --path . -s res://tools/build_spriteframes.gd -- seoha`
+- 서하 노드는 텍스처 필터가 Linear입니다. 1배 크기로 쓰는 것을 기준으로 합니다.
 
 ## 아직 할 일
 - 한글 폰트: 지금은 운영체제 기본 폰트로 한글을 표시합니다. 배포 전에 Pretendard나 Noto Sans KR 같은 무료 폰트를 `assets/fonts/`에 넣고 테마에 지정해야 합니다.

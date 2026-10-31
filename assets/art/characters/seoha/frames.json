@@ -1,32 +1,23 @@
 {
   "cell": [
-    222,
-    207
+    128,
+    160
   ],
   "animations": {
     "walk_down": {
-      "frames": 3,
+      "frames": 4,
       "cell": [
-        222,
-        207
+        128,
+        160
       ],
-      "fps": 6,
+      "fps": 8,
       "loop": true
     },
     "walk_up": {
-      "frames": 3,
-      "cell": [
-        222,
-        207
-      ],
-      "fps": 6,
-      "loop": true
-    },
-    "walk_left": {
       "frames": 4,
       "cell": [
-        222,
-        207
+        128,
+        160
       ],
       "fps": 8,
       "loop": true
@@ -34,92 +25,164 @@
     "walk_right": {
       "frames": 4,
       "cell": [
-        222,
-        207
+        128,
+        160
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    "walk_left": {
+      "frames": 4,
+      "cell": [
+        128,
+        160
       ],
       "fps": 8,
       "loop": true
     },
     "idle": {
-      "frames": 3,
+      "frames": 4,
       "cell": [
-        222,
-        207
+        128,
+        160
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "idle_up": {
+      "frames": 4,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "idle_right": {
+      "frames": 4,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "idle_left": {
+      "frames": 4,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "take_pill": {
+      "frames": 4,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 2,
+      "loop": false
+    },
+    "fake_swallow": {
+      "frames": 1,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 2,
+      "loop": false
+    },
+    "startle": {
+      "frames": 2,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "step_back_right": {
+      "frames": 1,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "step_back_left": {
+      "frames": 1,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 4,
+      "loop": false
+    },
+    "cry": {
+      "frames": 1,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 2,
+      "loop": true
+    },
+    "sad": {
+      "frames": 2,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 2,
+      "loop": true
+    },
+    "piano": {
+      "frames": 4,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "happy": {
+      "frames": 2,
+      "cell": [
+        128,
+        160
       ],
       "fps": 3,
       "loop": true
     },
     "wave": {
+      "frames": 2,
+      "cell": [
+        128,
+        160
+      ],
+      "fps": 4,
+      "loop": true
+    },
+    "point_right": {
       "frames": 1,
       "cell": [
-        222,
-        207
+        128,
+        160
       ],
       "fps": 4,
       "loop": false
     },
-    "point": {
+    "point_left": {
       "frames": 1,
       "cell": [
-        222,
-        207
+        128,
+        160
       ],
       "fps": 4,
       "loop": false
-    },
-    "worry": {
-      "frames": 2,
-      "cell": [
-        222,
-        207
-      ],
-      "fps": 3,
-      "loop": true
-    },
-    "sit_draw": {
-      "frames": 5,
-      "cell": [
-        222,
-        207
-      ],
-      "fps": 4,
-      "loop": true
-    },
-    "sit_bench": {
-      "frames": 2,
-      "cell": [
-        222,
-        207
-      ],
-      "fps": 2,
-      "loop": true
-    },
-    "idle_right": {
-      "cell": [
-        222,
-        207
-      ],
-      "loop": true,
-      "frames": 4,
-      "fps": 3
-    },
-    "idle_up": {
-      "cell": [
-        222,
-        207
-      ],
-      "loop": true,
-      "frames": 4,
-      "fps": 3
-    },
-    "idle_left": {
-      "cell": [
-        222,
-        207
-      ],
-      "loop": true,
-      "frames": 4,
-      "fps": 3
     }
   }
 }

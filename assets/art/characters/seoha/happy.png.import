@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://01aerrhgjagk"
-path="res://.godot/imported/worry.png-0871a87e0cdbcb1eb684509761700b33.ctex"
+uid="uid://mbxhetoi6stw"
+path="res://.godot/imported/happy.png-d1edaef2a41a9ba0a8701dc3888eaa7f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/seoha/worry.png"
-dest_files=["res://.godot/imported/worry.png-0871a87e0cdbcb1eb684509761700b33.ctex"]
+source_file="res://assets/art/characters/seoha/happy.png"
+dest_files=["res://.godot/imported/happy.png-d1edaef2a41a9ba0a8701dc3888eaa7f.ctex"]
 
 [params]
 

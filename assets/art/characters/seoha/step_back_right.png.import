@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://fwvpvsarys70"
-path="res://.godot/imported/sit_bench.png-d18f6487ddfc2d5541e8bd2de61b6b0c.ctex"
+uid="uid://dkhlp2tgcqlp6"
+path="res://.godot/imported/step_back_right.png-27321bfcde15fd22b04944f15c4e6a6a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/seoha/sit_bench.png"
-dest_files=["res://.godot/imported/sit_bench.png-d18f6487ddfc2d5541e8bd2de61b6b0c.ctex"]
+source_file="res://assets/art/characters/seoha/step_back_right.png"
+dest_files=["res://.godot/imported/step_back_right.png-27321bfcde15fd22b04944f15c4e6a6a.ctex"]
 
 [params]
 

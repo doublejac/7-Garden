@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b3pkhc6r2fosq"
-path="res://.godot/imported/point.png-3881303fdddb4e98aa80744406756054.ctex"
+uid="uid://qprhud1usp8n"
+path="res://.godot/imported/point_right.png-d24a118aa6dfaedc80a69bbc8771aa72.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/seoha/point.png"
-dest_files=["res://.godot/imported/point.png-3881303fdddb4e98aa80744406756054.ctex"]
+source_file="res://assets/art/characters/seoha/point_right.png"
+dest_files=["res://.godot/imported/point_right.png-d24a118aa6dfaedc80a69bbc8771aa72.ctex"]
 
 [params]
 

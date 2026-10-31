@@ -4,7 +4,10 @@ extends Node2D
 
 const SPEED := 90.0
 const SCALE := 1.0
-const SPECIAL := {KEY_1: "wave", KEY_2: "point", KEY_3: "worry", KEY_4: "sit_draw", KEY_5: "sit_bench"}
+const SPECIAL := {
+	KEY_1: "take_pill", KEY_2: "fake_swallow", KEY_3: "startle", KEY_4: "cry", KEY_5: "sad",
+	KEY_6: "happy", KEY_7: "wave", KEY_8: "point_right", KEY_9: "piano", KEY_0: "step_back_right",
+}
 
 var seoha: CharacterSprite
 var _special := false
@@ -20,7 +23,7 @@ func _ready() -> void:
 	seoha.scale = Vector2(SCALE, SCALE)
 	add_child(seoha)
 	var help := Label.new()
-	help.text = "방향키: 걷기    1 손 흔들기  2 가리키기  3 걱정  4 그림 그리기  5 벤치    Esc: 끝내기"
+	help.text = "방향키: 걷기 / 1 약 먹기  2 삼키는 척  3 놀람  4 울기  5 슬픔  6 기쁨  7 손 흔들기  8 가리키기  9 피아노  0 뒷걸음 / Esc: 끝내기"
 	help.position = Vector2(16, 12)
 	add_child(help)
 
