@@ -41,7 +41,7 @@ def swing_hands(img, sa, s_hem, amount):
     sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
     blobs = sorted(np.argsort(sizes)[-2:] + 1, key=lambda i: np.nonzero(lab == i)[1].mean())
     out = img.copy()
-    white = al & (a[..., 0] > 200) & (a[..., 1] > 200) & (a[..., 2] > 200)
+    white = al & (a[..., 0] > 200) & (a[..., 1] > 200) & (a[..., 2] > 200) & (a[..., 2] >= a[..., 0] - 5)   # 원피스(푸른 흰색)만, 손 하이라이트 제외
     for side, i in zip((-1, 1), blobs):            # 왼쪽 손, 오른쪽 손
         ys, xs = np.nonzero(lab == i)
         y0, y1 = ys.min() - 8, ys.max() + 3          # 소매 끝부분 + 손 (외곽선 포함)
@@ -69,7 +69,32 @@ def swing_hands(img, sa, s_hem, amount):
     return out
 
 
-def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0):
+def lift_leg(sa, s_hem, side, n):
+    """정지 그림의 다리 중 한쪽(side -1 왼쪽 / 1 오른쪽)을 n px 위로 올린다 (원피스 밑단 뒤로 들어감).
+    뒷모습에서 앞으로 내딛는 발은 화면 위쪽으로 올라가 보이므로, 편집 그림 없이 정지 그림의 다리로 걷기를 만든다."""
+    out = sa.copy()
+    top = s_hem + 1
+    legs = sa[top:]
+    al = legs[..., 3] > 0
+    xs = np.nonzero(al.any(0))[0]
+    if xs.size == 0:
+        return out
+    # 두 다리 사이 틈: 다리 구역 가운데 근처에서 불투명 픽셀이 가장 적은 열
+    mid = (xs[0] + xs[-1]) // 2
+    cols = range(mid - 6, mid + 7)
+    gap = min(cols, key=lambda c: (al[:, c].sum(), abs(c - mid)))
+    sl = slice(0, gap) if side < 0 else slice(gap, sa.shape[1])
+    part = legs[:, sl].copy()
+    out[top:, sl] = 0
+    shifted = np.zeros_like(part)
+    shifted[:part.shape[0] - n] = part[n:]
+    region = out[top:, sl]
+    m = shifted[..., 3] > 0
+    region[m] = shifted[m]
+    return out
+
+
+def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -78,6 +103,23 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0):
     s_al = sa[..., 3] > 128
     s_top = np.nonzero(s_al.any(1))[0][0]
     s_hem = hem_row(sa)
+
+    if lift:
+        # 편집 그림 없이: 한쪽 다리를 올린 칸 / 서기 / 반대쪽 다리를 올린 칸 / 서기
+        a1 = lift_leg(sa, s_hem, 1, lift)
+        a2 = lift_leg(sa, s_hem, -1, lift)
+        if hands:
+            a1 = swing_hands(a1, sa, s_hem, hands)
+            a2 = swing_hands(a2, sa, s_hem, -hands)
+        frames = [Image.fromarray(a1, "RGBA"), stand, Image.fromarray(a2, "RGBA"), stand]
+        sheet = Image.new("RGBA", (cw * 4, ch), (0, 0, 0, 0))
+        for i, f in enumerate(frames):
+            sheet.alpha_composite(f, (i * cw, 0))
+        sheet.save(out / f"{name}.png")
+        meta["animations"][name] = {"frames": 4, "cell": [cw, ch], "fps": fps, "loop": True}
+        (out / "frames.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"{name}: 4칸 (다리 {lift}px 올림)")
+        return
 
     src = Image.fromarray(key_green(np.array(Image.open(legs_src).convert("RGB"))), "RGBA")
     src = src.crop(src.getbbox())
