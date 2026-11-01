@@ -1,14 +1,14 @@
 {
   "cell": [
     108,
-    159
+    160
   ],
   "animations": {
     "idle": {
       "frames": 8,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 3,
       "loop": true
@@ -17,7 +17,7 @@
       "frames": 4,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 3,
       "loop": true
@@ -26,7 +26,7 @@
       "frames": 8,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 3,
       "loop": true
@@ -35,52 +35,52 @@
       "frames": 8,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 3,
       "loop": true
     },
     "walk_down": {
-      "frames": 4,
+      "frames": 8,
       "cell": [
         108,
-        159
+        160
       ],
-      "fps": 6,
+      "fps": 10,
       "loop": true
     },
     "walk_up": {
-      "frames": 4,
+      "frames": 8,
       "cell": [
         108,
-        159
+        160
       ],
-      "fps": 6,
+      "fps": 10,
       "loop": true
     },
     "walk_right": {
-      "frames": 4,
+      "frames": 8,
       "cell": [
         108,
-        159
+        160
       ],
-      "fps": 6,
+      "fps": 10,
       "loop": true
     },
     "walk_left": {
-      "frames": 4,
+      "frames": 8,
       "cell": [
         108,
-        159
+        160
       ],
-      "fps": 6,
+      "fps": 10,
       "loop": true
     },
     "take_pill": {
       "frames": 4,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 2,
       "loop": false
@@ -89,7 +89,7 @@
       "frames": 4,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 2,
       "loop": false
@@ -98,7 +98,7 @@
       "frames": 4,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 4,
       "loop": false
@@ -107,7 +107,7 @@
       "frames": 6,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 3,
       "loop": true
@@ -116,7 +116,7 @@
       "frames": 6,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 3,
       "loop": true
@@ -125,7 +125,7 @@
       "frames": 6,
       "cell": [
         108,
-        159
+        160
       ],
       "fps": 3,
       "loop": true
