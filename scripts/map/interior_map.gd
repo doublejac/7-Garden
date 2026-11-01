@@ -244,14 +244,22 @@ func _add_door(d: Dictionary) -> void:
 				posts.append(Rect2(Vector2(x * TILE, py), Vector2(TILE, 12)))
 			axis = "rot"
 			rect = Rect2(Vector2(x * TILE, y * TILE), Vector2(TILE, 2 * TILE))
-		"h":   # 가로 벽 문: 같은 문짝을 눕힌 것. 열면 왼쪽 기둥(경첩) 쪽으로 접히며 사라짐
-			node.position = Vector2(x, y + 1) * TILE
-			var cy := (y + 0.5) * TILE
-			leaf = _sprite("door_plank_h")
-			leaf.position = Vector2(x * TILE + 14, cy - leaf.texture.get_height() / 2.0) - node.position
-			for px in [x * TILE, (x + 2) * TILE - 16]:
-				posts.append(Rect2(Vector2(px, y * TILE), Vector2(16, TILE)))
-			axis = "x"
+		"h":   # 가로 벽 문(아래 방으로 들어가는 문): 옆문 부품을 눕혀 씀. 왼쪽 경첩을 축으로 돌아 벽면에 붙음
+			var sill := _sprite("side_threshold_h")
+			var leaf_tex: Texture2D = load(PROP_DIR + "side_leaf_h.png")
+			var lh := leaf_tex.get_height()
+			var hinge := Vector2(x * TILE + 4, (y + 0.5) * TILE + swing * (TILE / 2.0 - lh / 2.0 - 4))
+			node.position = Vector2(x * TILE, maxf(hinge.y, y * TILE + 8))
+			sill.position = Vector2(x, y) * TILE - node.position
+			sill.z_index = -1
+			node.add_child(sill)
+			leaf = _sprite("side_leaf_h")
+			leaf.position = hinge - node.position
+			leaf.offset = Vector2(0, -lh / 2.0)
+			leaf.set_meta("open_rot", PI if swing > 0 else -PI)
+			for px in [x * TILE, (x + 2) * TILE - 12]:
+				posts.append(Rect2(Vector2(px, y * TILE), Vector2(12, TILE)))
+			axis = "rot"
 			rect = Rect2(Vector2(x * TILE, y * TILE), Vector2(2 * TILE, TILE))
 		"f":   # 정면 문: 닫힘 → 반쯤 열림 → 열림 세 장을 바꿔 보여 줌. 그림 위쪽에 벽(몰딩·회벽)까지 포함
 			var dw: int = d.get("w", 2)   # 문 자리 폭(칸)

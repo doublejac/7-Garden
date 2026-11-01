@@ -801,27 +801,6 @@
    false
   ],
   [
-   "threshold",
-   11.0,
-   27.6,
-   [],
-   true
-  ],
-  [
-   "threshold",
-   20.0,
-   27.6,
-   [],
-   true
-  ],
-  [
-   "threshold",
-   34.0,
-   37.6,
-   [],
-   true
-  ],
-  [
    "door_mat",
    34.0,
    36.9,
@@ -874,6 +853,24 @@
    "y": 20,
    "type": "f",
    "sprite": "glass_door"
+  },
+  {
+   "x": 10,
+   "y": 27,
+   "type": "h",
+   "swing": 1
+  },
+  {
+   "x": 19,
+   "y": 27,
+   "type": "h",
+   "swing": 1
+  },
+  {
+   "x": 33,
+   "y": 37,
+   "type": "h",
+   "swing": -1
   }
  ],
  "labels": [

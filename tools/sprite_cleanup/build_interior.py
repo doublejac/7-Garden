@@ -313,6 +313,9 @@ def build_side_door(save):
     th = Image.fromarray(key(np.array(img.crop(SIDE_THRESHOLD))), "RGBA")
     th = th.crop(th.getbbox()).transpose(Image.ROTATE_90)
     save("side_threshold_v", hq_resize_xy(th, T, 2 * T))
+    # 가로 벽(아래로 들어가는 문)용: 같은 부품을 눕힘. 경첩이 왼쪽
+    save("side_leaf_h", leaf.transpose(Image.ROTATE_90))
+    save("side_threshold_h", hq_resize_xy(th, T, 2 * T).transpose(Image.ROTATE_90))
 
 
 def build_doors(save):

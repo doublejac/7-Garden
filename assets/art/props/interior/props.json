@@ -290,5 +290,13 @@
   "side_threshold_v": [
     64,
     128
+  ],
+  "side_leaf_h": [
+    120,
+    27
+  ],
+  "side_threshold_h": [
+    128,
+    64
   ]
 }
