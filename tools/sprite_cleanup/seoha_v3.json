@@ -195,7 +195,8 @@
           2,
           1,
           0
-        ]
+        ],
+        "alt_legs": true
       }
     },
     {
@@ -258,7 +259,8 @@
           1,
           0
         ],
-        "back": true
+        "back": true,
+        "alt_legs": true
       }
     },
     {
