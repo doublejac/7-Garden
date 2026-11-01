@@ -13,7 +13,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent))
-from clean_chroma import hq_resize, key_green  # noqa: E402
+from clean_chroma import chin_rows, hq_resize, key_green  # noqa: E402
 
 
 def hem_row(a):
@@ -22,7 +22,7 @@ def hem_row(a):
     return int(np.nonzero(white.sum(1) >= 6)[0].max())
 
 
-def main(out_dir, name, idle_name, legs_src, fps=6):
+def main(out_dir, name, idle_name, legs_src, fps=6, body=False):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -37,17 +37,45 @@ def main(out_dir, name, idle_name, legs_src, fps=6):
     ea = np.array(src)
     e_top = np.nonzero((ea[..., 3] > 128).any(1))[0][0]
     k = (s_hem - s_top) / (hem_row(ea) - e_top)          # 머리끝~밑단 길이를 정지 그림에 맞춤
-    src = hq_resize(src, k)
-    ea = np.array(src)
+    big = src
+    for _ in range(3):   # 원본은 해상도가 커서 밑단 위치가 줄인 뒤와 다르게 잡힘 → 줄인 결과로 다시 맞춤
+        src = hq_resize(big, k)
+        ea = np.array(src)
+        got = hem_row(ea) - np.nonzero((ea[..., 3] > 128).any(1))[0][0]
+        k *= (s_hem - s_top) / got
     e_hem = hem_row(ea)
+    if body:
+        # 색 맞춤: 편집 그림은 색감이 조금 달라 정지 그림과 번갈아 나오면 깜빡임 → 몸 부분 색 분포를 정지 그림에 맞춤
+        chin_s = chin_rows(stand)[1] + 2
+        e_top0 = np.nonzero((ea[..., 3] > 128).any(1))[0][0]
+        s_reg = sa[chin_s:s_hem][sa[chin_s:s_hem, :, 3] > 200][:, :3].astype(float)
+        eb = ea[chin_s - s_top + e_top0:e_hem]
+        e_reg = eb[eb[..., 3] > 200][:, :3].astype(float)
+        f = ea[..., :3].astype(float)
+        for c in range(3):
+            sm, ss = s_reg[:, c].mean(), s_reg[:, c].std() + 1e-3
+            em, es = e_reg[:, c].mean(), e_reg[:, c].std() + 1e-3
+            f[..., c] = (f[..., c] - em) * (ss / es) + sm
+        ea = ea.copy()
+        ea[..., :3] = f.clip(0, 255).astype(np.uint8)
+    if body:
+        # 폭 맞춤: 편집 그림의 몸이 더 홀쭉하게 나와서, 카디건 폭(밑단 위 줄)을 정지 그림에 맞춤
+        def wid(a, y):
+            xs = np.nonzero(a[y, :, 3] > 128)[0]
+            return xs[-1] - xs[0] + 1
+        e_top0 = np.nonzero((ea[..., 3] > 128).any(1))[0][0]
+        rows = range(s_hem - 30, s_hem - 10)
+        kxb = np.median([wid(sa, y) / wid(ea, y - s_top + e_top0) for y in rows])
+        from clean_chroma import hq_resize_xy
+        ea = np.array(hq_resize_xy(Image.fromarray(ea, "RGBA"), round(ea.shape[1] * kxb), ea.shape[0]))
     e_cx = np.nonzero((ea[..., 3] > 128).any(0))[0].mean()
     s_cx = np.nonzero(s_al.any(0))[0].mean()
 
-    cut = s_hem - 1                                        # 밑단 바로 위부터 다리
+    cut = s_hem + 2 if body else s_hem - 1                 # 다리가 시작하는 줄 (몸도 바꾸면 밑단 외곽선 아래부터)
     # 다리만 따로 배율: 서 있는 발(가장 아래)이 정지 그림의 바닥선에 닿도록 (편집 그림은 다리가 가늘고 짧게 나옴)
     s_bot = np.nonzero(s_al.any(1))[0][-1]
     e_bot = np.nonzero((ea[..., 3] > 128).any(1))[0][-1]
-    leg_img = Image.fromarray(ea[e_hem - 1:e_bot + 1], "RGBA")
+    leg_img = Image.fromarray(ea[(e_hem + 2 if body else e_hem - 1):e_bot + 1], "RGBA")
     k2 = (s_bot - cut + 1) / leg_img.height
     # 폭: 다리 묶음 폭을 정지 그림의 다리 폭에 맞춤 (편집 그림은 다리·신발이 가늘게 나옴)
     sl = np.nonzero((sa[s_hem + 2:, :, 3] > 128).any(0))[0]
@@ -76,12 +104,32 @@ def main(out_dir, name, idle_name, legs_src, fps=6):
         tgt[m] = src_px[m]
         row[xs[ok]] = tgt
 
+    top_cut = cut
+    if body:
+        # 몸(턱 아래 ~ 밑단)도 편집 그림에서: 팔 흔들림. 머리는 정지 그림 그대로
+        chin = chin_rows(stand)[1] + 2
+        e_top2 = np.nonzero((ea[..., 3] > 128).any(1))[0][0]
+        dy = s_top - e_top2
+        bx = np.nonzero((ea[..., 3] > 128).any(0))[0]
+        bx0 = int(round(np.nonzero(s_al.any(0))[0].mean() - bx.mean()))
+        step[chin:cut] = 0
+        for y in range(chin, cut):
+            ey = y - dy
+            if 0 <= ey < ea.shape[0]:
+                row = ea[ey]
+                xs = np.arange(row.shape[0]) + bx0
+                ok = (xs >= 0) & (xs < cw)
+                m = row[ok][..., 3] > 0
+                tgt = step[y][xs[ok]]
+                tgt[m] = row[ok][m]
+                step[y][xs[ok]] = tgt
+        top_cut = chin
 
-    # 반대 발: 다리 부분만 좌우 반전 (몸 가운데 기준)
+    # 반대 발: 다리(와 몸) 부분만 좌우 반전 (몸 가운데 기준)
     other = step.copy()
-    xs = np.nonzero((step[cut:, :, 3] > 128).any(0))[0]
+    xs = np.nonzero((step[top_cut:, :, 3] > 128).any(0))[0]
     a0, a1 = xs[0], xs[-1] + 1
-    other[cut:, a0:a1] = step[cut:, a0:a1][:, ::-1]
+    other[top_cut:, a0:a1] = step[top_cut:, a0:a1][:, ::-1]
 
     frames = [Image.fromarray(step, "RGBA"), stand, Image.fromarray(other, "RGBA"), stand]
     sheet = Image.new("RGBA", (cw * 4, ch), (0, 0, 0, 0))
