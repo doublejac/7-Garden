@@ -1,11 +1,12 @@
 # interior_map.gd
 # 실내 맵 공용 로더. data/maps/<이름>.json 하나로 바닥·벽, 가구, 문, 달빛을 만든다.
 # 맵 씬을 단독 실행(F6)하면 개발용으로 서하·카메라·조작 안내가 붙는다.
-#   방향키: 걷기   E: 문 열기/닫기   C: 복도 바닥 바꾸기   T: 시간대   Z: 확대/축소   G: 격자   L: 방 이름   Esc
+#   방향키: 걷기   E: 문   T: 시간대   V: 조명 톤(1회차/평소/2회차)   F: 안개   Z: 확대   G: 격자   L: 방 이름   Esc
 #
 # JSON 형식
 #   layout   : 글자 배열. # 벽 윗면(테두리 자동)  W 벽 앞면(몰딩/회벽/판벽 자동)  나머지는 바닥 (FLOORS 참고)
-#   props    : [이름, 가운데 x, 바닥 닿는 y, 막는 영역 [x, y, 폭, 높이] 또는 [], 벽에 걸림?]   (타일 단위)
+#   props    : [이름, 가운데 x, 바닥 닿는 y, 막는 영역 [x, y, 폭, 높이] 또는 [], 뒤에 깔림?]   (타일 단위)
+#              뒤에 깔림 = 벽에 건 것(창문·액자)이나 바닥 깔개(러그): 언제나 인물 뒤에 그림
 #   doors    : {x, y, type: "v"(세로 벽) | "h"(가로 벽) | "f"(정면 벽), swing: 1|-1, open, locked, sprite}
 #              v: (x, y)~(x, y+1) 두 칸, swing 1 = 오른쪽 방으로 열림
 #              h: (x, y)~(x+1, y) 두 칸, swing 1 = 아래쪽 방으로 열림
@@ -30,19 +31,21 @@ const FLOORS := {
 	"L": [Vector2i(0, 2), 2, 0, 0],   # 로비 체크무늬
 	"F": [Vector2i(2, 2), 2, 0, 0],   # 식당 테라코타
 	"K": [Vector2i(4, 0), 2, 0, 0],   # 회색 타일 (주방·투약실)
-	"M": [Vector2i(8, 0), 2, 0, 0],   # 대리석
-	"H": [Vector2i(10, 0), 2, 0, 0],  # 헤링본
+	"B": [Vector2i(6, 0), 2, 0, 0],   # 욕실 흰 육각 타일
 }
-# 복도 바닥 후보: 세로 복도(,)·가로 복도(_)에 깔린다. C 키로 바꿔 봄
+# 복도 바닥: 세로 복도(,)·가로 복도(_)에 깔린다
 const CORRIDORS := {
 	"floral": ["꽃무늬 타일", [Vector2i(8, 2), 2, 0, 0], [Vector2i(8, 2), 2, 0, 0]],
-	"runner": ["러너 카펫", [Vector2i(0, 5), 3, 10, 0], [Vector2i(3, 5), 3, 0, 24]],
-	"herringbone": ["헤링본 마루", [Vector2i(10, 0), 2, 0, 0], [Vector2i(10, 0), 2, 0, 0]],
-	"marble": ["대리석", [Vector2i(8, 0), 2, 0, 0], [Vector2i(8, 0), 2, 0, 0]],
 }
-const TIMES := [
-	["아침", Color("#ffe9d6")], ["낮", Color.WHITE], ["저녁", Color("#ffbf94")], ["밤", Color("#36406a")],
+# 시간대 이름
+const TIMES := ["아침", "낮", "저녁", "밤"]
+# 조명 톤: 해무 톤 그림 위에 거는 색 (아침, 낮, 저녁, 밤). 그림은 한 벌, 분위기는 조명으로
+const TONES := [
+	["1회차 (따뜻하게)", [Color("#ffe4c8"), Color("#ffefdc"), Color("#ffc293"), Color("#3c4672")]],
+	["평소", [Color("#f2ecea"), Color.WHITE, Color("#e8c6ad"), Color("#343e66")]],
+	["2회차 (차갑게)", [Color("#d9e0ec"), Color("#d6dde8"), Color("#bdb3b8"), Color("#28304f")]],
 ]
+const FOG_LEVELS := [0.0, 0.35, 0.7]   # 화면 가장자리 해무 (날이 갈수록 짙게)
 
 @export_file("*.json") var map_file := "res://data/maps/int_main.json"
 
@@ -63,6 +66,9 @@ var modulate_node: CanvasModulate
 var grid: Node2D
 var info: Label
 var time_index := 1
+var tone_index := 0
+var fog_index := 1
+var fog_rect: ColorRect
 
 
 func _ready() -> void:
@@ -347,6 +353,16 @@ func _setup_dev() -> void:
 	info.add_theme_color_override("font_outline_color", Color.BLACK)
 	info.add_theme_constant_override("outline_size", 6)
 	hud.add_child(info)
+	var fog_layer := CanvasLayer.new()   # 조명(CanvasModulate)의 영향을 받지 않는 화면 효과
+	fog_layer.layer = 5
+	add_child(fog_layer)
+	fog_rect = ColorRect.new()
+	fog_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fog_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/sea_fog.gdshader")
+	fog_rect.material = mat
+	fog_layer.add_child(fog_rect)
 	_apply_time()
 
 
@@ -373,11 +389,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			var r := toggle_door_near(feet_rect())
 			if r == "locked":
 				_update_info("잠겨 있다.")
-		KEY_C:
-			var keys := CORRIDORS.keys()
-			corridor_key = keys[(keys.find(corridor_key) + 1) % keys.size()]
-			paint()
-			_update_info()
+		KEY_V:
+			tone_index = (tone_index + 1) % TONES.size()
+			_apply_time()
+		KEY_F:
+			fog_index = (fog_index + 1) % FOG_LEVELS.size()
+			_apply_time()
 		KEY_T:
 			time_index = (time_index + 1) % TIMES.size()
 			_apply_time()
@@ -391,15 +408,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _apply_time() -> void:
-	modulate_node.color = TIMES[time_index][1]
+	modulate_node.color = TONES[tone_index][1][time_index]
 	set_night(time_index == 3)
+	(fog_rect.material as ShaderMaterial).set_shader_parameter("strength", FOG_LEVELS[fog_index])
 	_update_info()
 
 
 func _update_info(note := "") -> void:
-	info.text = "%s   시간대: %s   확대: %d%%   복도: %s   %s\n방향키 걷기 · E 문 · L 방 이름 · C 복도 바닥 · T 시간대 · Z 확대(100/75/50) · G 격자 · Esc" % [
-		data.get("name", ""), TIMES[time_index][0], roundi(camera.zoom.x * 100),
-		CORRIDORS[corridor_key][0], note]
+	info.text = "%s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · E 문 · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
+		data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
+		roundi(camera.zoom.x * 100), note]
 
 
 func _make_grid() -> Node2D:

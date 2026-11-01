@@ -1,153 +1,156 @@
-"""실내 타일·가구 정리 도구 (Gemini 초록 배경 시트 → Godot용 PNG).
+"""실내 타일·가구 정리 도구 – 해무 톤 (Gemini 초록 배경 시트 → Godot용 PNG).
 
 사용: python3 tools/sprite_cleanup/build_interior.py
-  입력: tools/sprite_cleanup/src/map/interior_tiles.jpg, interior_props.jpg
+  입력: tools/sprite_cleanup/src/map/haemu_tiles.jpg       바닥·벽 타일 시트 (4×4, 한 칸 = 타일 2×2)
+        tools/sprite_cleanup/src/map/haemu_props_room.jpg  병실 공통 가구·문·창
+        tools/sprite_cleanup/src/map/legacy_props/          아직 해무 톤으로 다시 받지 않은 가구 (색만 해무 톤으로 바꿔 씀)
   출력: assets/art/tiles/interior.png (64px 타일 아틀라스)
-        assets/art/props/interior/<이름>.png + props.json (크기 정보)
+        assets/art/props/interior/<이름>.png + props.json
 
-타일 시트는 Gemini 한 칸을 타일 2×2칸(128px)으로 쓴다 (견본 방과 디테일 굵기가 맞음).
+이전(따뜻한 갈색) 버전 도구는 build_interior_warm_old.py 로 남겨 둠.
 """
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance
 from scipy import ndimage as ndi
 
 sys.path.insert(0, str(Path(__file__).parent))
-from clean_chroma import hq_resize, key_green  # noqa: E402
+from clean_chroma import hq_resize  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = Path(__file__).parent / "src" / "map"
+OUT_TILES = ROOT / "assets/art/tiles"
+OUT_PROPS = ROOT / "assets/art/props/interior"
 T = 64
-
-# 타일 시트: 이름 → ((시트 행, 열), 아틀라스 위치(타일 단위)). 모두 2×2 블록
-TILE_BLOCKS = {
-    "wood_a": ((0, 0), (0, 0)), "wood_b": ((0, 1), (2, 0)),
-    "corridor_a": ((0, 2), (4, 0)), "corridor_b": ((0, 3), (6, 0)),
-    "lobby": ((3, 0), (0, 2)), "dining": ((3, 1), (2, 2)),
-}
-WALL_AT = (4, 2)        # 벽 앞면 2×3 (몰딩 / 회벽 / 판벽)
-WALL_TOP_AT = (6, 2)    # 벽 윗면 1칸
 ATLAS = (12, 9)
 
-# 2차 시트 (복도 바닥 후보·비상구, 옆벽 문·벽 윗면). 좌표는 원본 2048px 기준 [x0, y0, x1, y1]
-CORRIDOR_SRC = "corridor_exit.jpg"
-CORRIDOR_BLOCKS = {          # 이름: (원본 칸, 아틀라스 위치, 블록 크기(타일))
-    "marble": ((37, 528, 512, 1013), (8, 0), 2),
-    "herringbone": ((532, 528, 1014, 1013), (10, 0), 2),
-    "floral": ((37, 1035, 511, 1515), (8, 2), 2),
-    "runner_v": ((532, 1034, 1014, 1516), (0, 5), 3),   # 세로 복도용 러너 카펫 (3칸 폭)
+# ── 타일 시트: 칸 [x0, y0, x1, y1] (원본 2048px) → 아틀라스 위치(타일 단위), 2×2 블록 ──
+TILE_SRC = "haemu_tiles.jpg"
+FLOOR_BLOCKS = {
+    "wood_a": ((25, 25, 508, 508), (0, 0)),
+    "wood_b": ((529, 25, 1013, 508), (2, 0)),
+    "gray_tile": ((1035, 529, 1519, 1013), (4, 0)),      # 주방·투약실
+    "bath_hex": ((1540, 24, 2024, 508), (6, 0)),        # 욕실
+    "floral": ((1034, 24, 1519, 508), (8, 2)),          # 복도
+    "lobby": ((25, 529, 508, 1013), (0, 2)),
+    "dining": ((529, 529, 1014, 1014), (2, 2)),
 }
-RUNNER_H_AT = (3, 5)         # 러너를 90도 돌린 가로 복도용
-EXIT_DOOR = (1034, 527, 2012, 1519)
-WALLS_SRC = "side_doors_walls.jpg"
-SIDE_DOOR_CLOSED = (245, 20, 342, 1014)
-WALL_TOP_V = (26, 1034, 512, 1522)
-WALL_TOP_H = (532, 1034, 1014, 1522)
-WALL_AUTO_AT = (6, 5)        # 벽 윗면 자동 타일 16종 (4×4). 번호 = 위1 + 오른쪽2 + 아래4 + 왼쪽8 (그쪽도 벽이면 켜짐)
+RUG = (1541, 529, 2023, 1013)                           # 러그는 이어지지 않는 한 장 그림 → 가구로
+WALL_TOP_CELL = (24, 1035, 507, 1519)                   # 몰딩 + 회벽
+WALL_BOTTOM_CELL = (1035, 1035, 1519, 1519)             # 회벽 + 판벽
+WALL_TOP_V = (24, 1542, 507, 2027)                      # 세로 벽 윗면
+WALL_TOP_H = (529, 1542, 1013, 2027)                    # 가로 벽 윗면
+WALL_AT = (4, 2)
+WALL_AUTO_AT = (6, 5)   # 벽 윗면 16종. 번호 = 위1 + 오른쪽2 + 아래4 + 왼쪽8 (그쪽도 벽 윗면이면 켜짐)
 
-# 가구: 시트에서 찾은 덩어리를 왼쪽 위부터 읽는 순서대로 이름 붙임
-PROP_NAMES = ["bed", "nightstand", "sink", "mirror", "plant", "wardrobe", "armchair", "desk",
-              "dining_table", "sofa", "frame_photo", "frame_empty", "door", "door_b", "glass_door", "window"]
-PROP_SCALE = 0.30                       # 침대 폭이 타일 2칸이 되는 배율 (시트 전체 공통)
-PROP_HEIGHT = {"door": 184, "door_b": 184, "glass_door": 184}   # 벽(3칸=192px) 안에 들어가야 하는 것
+# ── 가구 시트 (원본 1792×2400): 이름 → 상자, 배율 규칙 ──
+PROP_SRC = "haemu_props_room.jpg"
+K = 128 / 406           # 침대 폭(406px)이 타일 2칸이 되는 배율
+PROPS = {
+    "bed": ((110, 95, 516, 774), K),
+    "nightstand": ((699, 147, 892, 378), K),
+    "window": ((1110, 100, 1630, 505), K),
+    "vase_table": ((693, 476, 913, 823), K),        # 꽃 꽂힌 원탁
+    "table_small": ((1055, 554, 1276, 822), K),     # 빈 꽃병 원탁
+    "chair": ((1450, 512, 1645, 836), K),
+    "suitcase": ((150, 924, 421, 1189), K),
+    "wardrobe": ((581, 882, 912, 1303), K),
+    "armchair": ((1026, 916, 1325, 1218), K),
+    "plant": ((1461, 947, 1652, 1204), K),
+    "door": ((123, 1450, 413, 1932), ("h", 184)),
+    "exit_door": ((1077, 1362, 1658, 1973), ("h", 184)),
+    "frame_photo": ((1044, 2099, 1264, 2302), 0.26),
+    "frame_empty": ((1474, 2099, 1692, 2302), 0.26),
+}
+LEGACY = ["mirror", "sink", "desk", "sofa", "dining_table", "door_b",
+          "side_door_closed", "side_door_open", "side_door_closed_h", "side_door_open_h"]
 
 
-def grid_runs(v, th=0.3, min_len=100):
-    on, out, s = v > th, [], None
-    for i, x in enumerate(on):
-        if x and s is None:
-            s = i
-        if not x and s is not None:
-            out.append((s, i))
-            s = None
-    if s is not None:
-        out.append((s, len(on)))
-    return [o for o in out if o[1] - o[0] > min_len]
+def key(rgb):
+    """초록 배경 제거: 초록이 다른 채널보다 확실히 튀는 곳(그림자 포함)은 투명, 경계는 부드럽게, 초록 번짐 제거."""
+    im = rgb.astype(np.float32)
+    r, g, b = im[..., 0], im[..., 1], im[..., 2]
+    diff = g - np.maximum(r, b)
+    alpha = np.clip((45.0 - diff) / 25.0, 0.0, 1.0)
+    # 테두리와 이어진 초록만 배경. 물건 안쪽의 초록(비상구 표지판 등)은 그대로 둠
+    lab, _ = ndi.label(diff > 20)
+    border = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+    inner = (lab > 0) & ~np.isin(lab, border[border > 0])
+    # 단, 빨강·파랑이 비슷한 순수 초록(침대 살 사이·의자 등받이 틈으로 보이는 배경과 그 그림자)은
+    # 안쪽이어도 배경. 비상구 표지판처럼 청록 기가 있는 초록(파랑 > 빨강)만 남김
+    for i in np.unique(lab[inner]):
+        reg = lab == i
+        if np.median(b[reg] - r[reg]) < 25:
+            inner[reg] = False
+    alpha[inner] = 1.0
+    g2 = np.where((diff > 6) & ~inner, np.maximum(r, b) + 6, g)
+    return np.dstack([r, g2, b, alpha * 255]).clip(0, 255).astype(np.uint8)
+
+
+def cut(img_rgb, box):
+    rgba = key(np.array(img_rgb.crop(box)))
+    lab, n = ndi.label(rgba[..., 3] > 30)
+    if n > 1:   # 옆 물건에서 묻어 온 조각 제거 (가장 큰 덩어리의 15% 미만)
+        sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
+        keep = np.isin(lab, [i + 1 for i, s in enumerate(sizes) if s >= sizes.max() * 0.15])
+        rgba[~keep] = 0
+    im = Image.fromarray(rgba, "RGBA")
+    return im.crop(im.getbbox())
+
+
+def fogify(im):
+    """예전 갈색 가구를 해무 톤으로: 채도를 낮추고 살짝 차갑게."""
+    rgb = ImageEnhance.Color(im.convert("RGB")).enhance(0.45)
+    rgb = ImageEnhance.Contrast(rgb).enhance(0.9)
+    a = np.array(rgb).astype(np.float32) * np.array([0.95, 0.96, 1.0])
+    out = Image.fromarray(a.clip(0, 255).astype(np.uint8), "RGB").convert("RGBA")
+    out.putalpha(im.getchannel("A"))
+    return out
 
 
 def build_tiles():
-    img = Image.open(SRC / "interior_tiles.jpg").convert("RGB")
-    a = np.array(img).astype(int)
-    green = (a[..., 1] > 180) & (a[..., 0] < 120) & (a[..., 2] < 120)
-    cols, rows = grid_runs((~green).mean(0)), grid_runs((~green).mean(1))
+    img = Image.open(SRC / TILE_SRC).convert("RGB")
 
-    def cell(r, c, inset=6):
-        (y0, y1), (x0, x1) = rows[r], cols[c]
-        return img.crop((x0 + inset, y0 + inset, x1 - inset, y1 - inset)).resize((2 * T, 2 * T), Image.LANCZOS)
+    def cell(box, inset=6, n=2):
+        x0, y0, x1, y1 = box
+        return img.crop((x0 + inset, y0 + inset, x1 - inset, y1 - inset)).resize((n * T, n * T), Image.LANCZOS)
 
     atlas = Image.new("RGBA", (ATLAS[0] * T, ATLAS[1] * T), (0, 0, 0, 0))
-    for (r, c), (ax, ay) in TILE_BLOCKS.values():
-        atlas.paste(cell(r, c), (ax * T, ay * T))
+    for box, (ax, ay) in FLOOR_BLOCKS.values():
+        atlas.paste(cell(box), (ax * T, ay * T))
 
-    # 벽 앞면 128×192: 몰딩 띠(위 칸 윗부분) + 회벽 + 판벽 띠(아래 칸 아랫부분).
-    # Gemini 칸은 가장자리가 어두워 이어 붙이면 이음매가 보이므로, 회벽은 칸 가운데 색으로 평평하게 칠함
-    top, bottom = cell(1, 0, inset=8), cell(1, 2, inset=8)
+    # 벽 앞면 128×192: 몰딩 띠 + 평평한 회벽 + 판벽 띠 (칸 가장자리의 얼룩은 이어 붙이면 이음매가 되므로 회벽은 평평하게)
+    top, bottom = cell(WALL_TOP_CELL, inset=8), cell(WALL_BOTTOM_CELL, inset=8)
 
     def lum(im):
         return np.array(im.convert("L")).astype(int)[:, 32:96].mean(1)
 
     lt, lb = lum(top), lum(bottom)
-    m = int(np.argmax(lt > 200))                        # 몰딩이 끝나는 줄
-    w0 = int(len(lb) - np.argmax(lb[::-1] > 200))       # 판벽이 시작하는 줄
-    cream = tuple(int(v) for v in np.median(np.array(top.convert("RGBA"))[m + 8:m + 40, 40:88].reshape(-1, 4), 0))
-    strip = Image.new("RGBA", (2 * T, 3 * T), cream)
+    m = int(np.argmax(lt > 190))                        # 몰딩이 끝나는 줄
+    w0 = int(len(lb) - np.argmax(lb[::-1] > 190))       # 판벽이 시작하는 줄
+    plaster = tuple(int(v) for v in np.median(np.array(top.convert("RGBA"))[m + 10:m + 50, 40:88].reshape(-1, 4), 0))
+    strip = Image.new("RGBA", (2 * T, 3 * T), plaster)
     strip.paste(top.crop((0, 0, 2 * T, m)), (0, 0))
     strip.paste(bottom.crop((0, w0, 2 * T, 2 * T)), (0, 3 * T - (2 * T - w0)))
     atlas.paste(strip, (WALL_AT[0] * T, WALL_AT[1] * T))
 
-    # 벽 윗면: 짙은 나무색 한 가지 (줄을 넣으면 세로 벽에 가로줄이 반복돼 보임)
-    wt = Image.new("RGBA", (T, T), (61, 42, 31, 255))
-    atlas.paste(wt, (WALL_TOP_AT[0] * T, WALL_TOP_AT[1] * T))
-    build_tiles_2(atlas)
-    out = ROOT / "assets/art/tiles"
-    out.mkdir(parents=True, exist_ok=True)
-    atlas.save(out / "interior.png")
-    print("타일:", out / "interior.png", f"(몰딩 {m}px, 판벽 {2 * T - w0}px)")
+    # 벽 윗면: 시트의 세로/가로 벽 칸에서 갈색 띠(테두리 포함)만 잘라 64px로 → 테두리 조각으로 16종 합성
+    def band(box, axis):
+        a = np.array(img.crop(box)).astype(int)
+        brown = (a[..., 0] - a[..., 2]) > 4             # 갈색 띠 (옆의 회색 여백은 파란 기가 더 많음)
+        prof = brown.mean(axis)
+        idx = np.nonzero(prof > 0.6)[0]
+        lo, hi = idx[0], idx[-1] + 1
+        sub = img.crop(box)
+        sub = sub.crop((lo, 0, hi, sub.height)) if axis == 0 else sub.crop((0, lo, sub.width, hi))
+        return np.array(sub.resize((T, T), Image.LANCZOS))
 
-
-def build_props():
-    rgb = np.array(Image.open(SRC / "interior_props.jpg").convert("RGB"))
-    rgba = key_green(rgb)
-    solid = rgba[..., 3] > 128
-    lab, _ = ndi.label(ndi.binary_closing(solid, iterations=3))
-    boxes = [sl for sl in ndi.find_objects(lab) if (sl[0].stop - sl[0].start) * (sl[1].stop - sl[1].start) > 3000]
-    # 왼쪽 위부터 읽는 순서: 윗변 150px 단위로 행을 묶고 왼쪽부터
-    boxes.sort(key=lambda s: (s[0].start // 150, s[1].start))
-    if len(boxes) != len(PROP_NAMES):
-        sys.exit(f"가구 {len(boxes)}개를 찾음 (이름은 {len(PROP_NAMES)}개)")
-    out = ROOT / "assets/art/props/interior"
-    out.mkdir(parents=True, exist_ok=True)
-    meta = {}
-    for name, sl in zip(PROP_NAMES, boxes):
-        im = Image.fromarray(rgba[sl].copy(), "RGBA")
-        im = im.crop(im.getbbox())
-        k = PROP_HEIGHT[name] / im.height if name in PROP_HEIGHT else PROP_SCALE
-        im = hq_resize(im, k)
-        im = im.crop(im.getbbox())
-        im.save(out / f"{name}.png")
-        meta[name] = list(im.size)
-        print(f"  {name}: {im.size[0]}x{im.size[1]}")
-    (out / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
-
-
-def build_tiles_2(atlas):
-    """복도 바닥 후보와 벽 윗면 자동 타일."""
-    img = Image.open(SRC / CORRIDOR_SRC).convert("RGB")
-    for (x0, y0, x1, y1), (ax, ay), n in CORRIDOR_BLOCKS.values():
-        block = img.crop((x0 + 6, y0 + 6, x1 - 6, y1 - 6)).resize((n * T, n * T), Image.LANCZOS)
-        atlas.paste(block, (ax * T, ay * T))
-        if n == 3:
-            atlas.paste(block.transpose(Image.ROTATE_90), (RUNNER_H_AT[0] * T, RUNNER_H_AT[1] * T))
-
-    walls = Image.open(SRC / WALLS_SRC).convert("RGB")
-    v = walls.crop(WALL_TOP_V).resize((T, T), Image.LANCZOS)
-    h = walls.crop(WALL_TOP_H).resize((T, T), Image.LANCZOS)
-    a_v, a_h = np.array(v), np.array(h)
-    edge = 8                                           # 테두리 장식 두께(px)
-    fill = np.median(a_v[20:44, 20:44].reshape(-1, 3), 0).astype(np.uint8)
+    a_v, a_h = band(WALL_TOP_V, 0), band(WALL_TOP_H, 1)
+    edge = 9
+    fill = np.median(a_v[24:40, 24:40].reshape(-1, 3), 0).astype(np.uint8)
     for idx in range(16):
         up, right, down, left = idx & 1, idx & 2, idx & 4, idx & 8
         t = np.empty((T, T, 3), np.uint8)
@@ -160,7 +163,6 @@ def build_tiles_2(atlas):
             t[:edge, :] = a_h[:edge, :]
         if not down:
             t[-edge:, :] = a_h[-edge:, :]
-        # 바깥 모서리: 두 테두리가 만나는 자리는 세로 테두리 무늬로 맞춤
         for cond, ys in ((not up, slice(0, edge)), (not down, slice(T - edge, T))):
             if cond and not left:
                 t[ys, :edge] = a_v[ys, :edge]
@@ -168,53 +170,35 @@ def build_tiles_2(atlas):
                 t[ys, -edge:] = a_v[ys, -edge:]
         atlas.paste(Image.fromarray(t), ((WALL_AUTO_AT[0] + idx % 4) * T, (WALL_AUTO_AT[1] + idx // 4) * T))
 
-
-def open_door(closed):
-    """닫힌 옆문에서 열린 문을 만든다: 문틀 기둥은 그대로, 문짝만 위 기둥에서 방 쪽(오른쪽)으로 90도 돌림.
-    (Gemini가 그린 열린 문은 기둥이 네 개라 닫힌 문과 모양이 달라서 쓰지 않음)"""
-    a = np.array(closed)
-    wide = (a[..., 3] > 100).sum(1) >= a.shape[1] - 2      # 기둥 줄 (폭이 꽉 찬 줄)
-    rows = np.nonzero(~wide)[0]
-    p0, p1 = rows[0], rows[-1] + 1                          # 문짝 구간
-    leaf = closed.crop((0, p0, closed.width, p1))
-    leaf = leaf.crop(leaf.getbbox()).transpose(Image.ROTATE_90)   # 세로 → 가로
-    out = Image.new("RGBA", (closed.width + leaf.width, closed.height), (0, 0, 0, 0))
-    posts = a.copy()
-    posts[p0:p1] = 0
-    out.alpha_composite(Image.fromarray(posts, "RGBA"), (0, 0))
-    out.alpha_composite(leaf, (closed.width, p0 - leaf.height // 2))
-    return out
+    OUT_TILES.mkdir(parents=True, exist_ok=True)
+    atlas.save(OUT_TILES / "interior.png")
+    print("타일:", OUT_TILES / "interior.png", f"(몰딩 {m}px, 판벽 {2 * T - w0}px)")
 
 
-def build_props_2():
-    """비상구 유리문(새 것), 옆벽 문(닫힘/열림)."""
-    out = ROOT / "assets/art/props/interior"
-    meta = json.loads((out / "props.json").read_text(encoding="utf-8"))
+def build_props():
+    OUT_PROPS.mkdir(parents=True, exist_ok=True)
+    meta = {}
 
-    def cut(src, box, k=None, height=None):
-        rgba = key_green(np.array(Image.open(SRC / src).convert("RGB").crop(box)))
-        im = Image.fromarray(rgba, "RGBA")
+    def save(name, im):
         im = im.crop(im.getbbox())
-        im = hq_resize(im, k if k else height / im.height)
-        return im.crop(im.getbbox())
-
-    items = {
-        "exit_door": cut(CORRIDOR_SRC, EXIT_DOOR, height=184),
-        # 옆벽 문: 문틀 기둥 사이 = 타일 2칸 높이. 원본 994px → 128px
-        "side_door_closed": cut(WALLS_SRC, SIDE_DOOR_CLOSED, k=2 * T / 994),
-    }
-    items["side_door_open"] = open_door(items["side_door_closed"])
-    # 가로 벽용: 기둥이 좌우, 문짝은 왼쪽 기둥에서 아래 방 쪽으로 열림
-    items["side_door_closed_h"] = items["side_door_closed"].transpose(Image.ROTATE_90)
-    items["side_door_open_h"] = items["side_door_open"].transpose(Image.ROTATE_90).transpose(Image.FLIP_TOP_BOTTOM)
-    for name, im in items.items():
-        im.save(out / f"{name}.png")
+        im.save(OUT_PROPS / f"{name}.png")
         meta[name] = list(im.size)
         print(f"  {name}: {im.size[0]}x{im.size[1]}")
-    (out / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+    img = Image.open(SRC / PROP_SRC).convert("RGB")
+    for name, (box, rule) in PROPS.items():
+        im = cut(img, box)
+        k = rule[1] / im.height if isinstance(rule, tuple) else rule
+        save(name, hq_resize(im, k))
+    # 러그: 타일 시트의 러그 칸 → 가로 3칸 × 세로 2칸 크기의 바닥 깔개
+    tiles = Image.open(SRC / TILE_SRC).convert("RGB")
+    rug = tiles.crop((RUG[0] + 6, RUG[1] + 6, RUG[2] - 6, RUG[3] - 6)).resize((3 * T, 2 * T), Image.LANCZOS)
+    save("rug", rug.convert("RGBA"))
+    for name in LEGACY:
+        save(name, fogify(Image.open(SRC / "legacy_props" / f"{name}.png").convert("RGBA")))
+    (OUT_PROPS / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":
     build_tiles()
     build_props()
-    build_props_2()

@@ -1,70 +1,86 @@
 {
   "bed": [
-    134,
-    232
+    128,
+    214
   ],
   "nightstand": [
-    63,
-    89
+    61,
+    73
   ],
-  "sink": [
-    74,
-    72
+  "window": [
+    162,
+    125
+  ],
+  "vase_table": [
+    69,
+    109
+  ],
+  "table_small": [
+    70,
+    84
+  ],
+  "chair": [
+    57,
+    101
+  ],
+  "suitcase": [
+    85,
+    84
+  ],
+  "wardrobe": [
+    104,
+    133
+  ],
+  "armchair": [
+    94,
+    95
+  ],
+  "plant": [
+    60,
+    81
+  ],
+  "door": [
+    111,
+    184
+  ],
+  "exit_door": [
+    175,
+    184
+  ],
+  "frame_photo": [
+    57,
+    53
+  ],
+  "frame_empty": [
+    57,
+    53
+  ],
+  "rug": [
+    192,
+    128
   ],
   "mirror": [
     85,
     84
   ],
-  "plant": [
-    61,
-    92
-  ],
-  "wardrobe": [
-    129,
-    171
-  ],
-  "armchair": [
-    98,
-    110
+  "sink": [
+    74,
+    72
   ],
   "desk": [
     103,
     118
   ],
-  "dining_table": [
-    148,
-    148
-  ],
   "sofa": [
     217,
     97
   ],
-  "frame_photo": [
-    55,
-    66
-  ],
-  "frame_empty": [
-    55,
-    66
-  ],
-  "door": [
-    133,
-    184
+  "dining_table": [
+    148,
+    148
   ],
   "door_b": [
     133,
-    184
-  ],
-  "glass_door": [
-    184,
-    184
-  ],
-  "window": [
-    141,
-    136
-  ],
-  "exit_door": [
-    181,
     184
   ],
   "side_door_closed": [
