@@ -275,21 +275,34 @@ def build_doors(save):
     edge = tuple(int(v) for v in np.percentile(np.array(leaf)[..., :4].reshape(-1, 4), 5, axis=0))
     knob = (196, 182, 150, 255)
 
-    def plank(length, thick=10):
-        im = Image.new("RGBA", (thick + 6, length), (0, 0, 0, 0))
-        im.paste(edge[:3] + (255,), (3, 0, 3 + thick, length))
-        im.paste(wood[:3] + (255,), (4, 1, 3 + thick - 1, length - 1))
-        im.paste(tuple(min(255, c + 22) for c in wood[:3]) + (255,), (5, 2, 7, length - 2))   # 윗면 빛
+    def shade(c, d):
+        return tuple(max(0, min(255, v + d)) for v in c[:3]) + (255,)
+
+    def plank(length, thick=20):
+        """위에서 본 닫힌 문짝: 두께 있는 원목 판 + 가운데 홈 + 양쪽 손잡이."""
+        w = thick + 8
+        im = Image.new("RGBA", (w, length), (0, 0, 0, 0))
+        x0, x1 = 4, 4 + thick
+        im.paste(edge[:3] + (255,), (x0, 0, x1, length))                  # 테두리
+        im.paste(wood[:3] + (255,), (x0 + 1, 1, x1 - 1, length - 1))        # 판
+        im.paste(shade(wood, 26), (x0 + 2, 2, x0 + 4, length - 2))          # 윗면 빛
+        im.paste(shade(wood, -22), (x1 - 3, 2, x1 - 1, length - 2))         # 그늘
+        cx = (x0 + x1) // 2
+        im.paste(shade(wood, -34), (cx, 6, cx + 1, length - 6))             # 가운데 홈
+        for yy in (8, length - 9):                                          # 위아래 가로대
+            im.paste(shade(wood, -28), (x0 + 1, yy, x1 - 1, yy + 1))
         k = length // 2
-        im.paste(knob, (0, k - 2, 3, k + 2))
-        im.paste(knob, (3 + thick, k - 2, thick + 6, k + 2))
+        for kx in (0, x1 + 1):                                              # 손잡이 (양쪽)
+            im.paste(edge[:3] + (255,), (kx, k - 4, kx + 4, k + 4))
+            im.paste(knob, (kx + 1, k - 3, kx + 3, k + 3))
         return im
 
-    pv = plank(104)
+    pv = plank(100)
     save("door_plank_v", pv)
     save("door_plank_h", pv.transpose(Image.ROTATE_90))
-    post = Image.new("RGBA", (16, 14), edge[:3] + (255,))
-    post.paste(tuple(min(255, c + 18) for c in wood[:3]) + (255,), (1, 1, 15, 13))
+    post = Image.new("RGBA", (24, 16), edge[:3] + (255,))
+    post.paste(shade(wood, 8), (1, 1, 23, 15))
+    post.paste(shade(wood, 30), (2, 2, 22, 4))
     save("door_post", post)
 
 

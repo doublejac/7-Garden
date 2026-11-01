@@ -227,44 +227,24 @@ func _add_door(d: Dictionary) -> void:
 	var posts: Array[Rect2] = []         # 언제나 막는 문틀 기둥 (맵 좌표)
 	var axis := "x"
 	match type:
-		"v":   # 세로 벽 문: 위에서 보면 문짝 두께만, 열면 방 안에 문짝 앞면이 서 있음
+		"v":   # 세로 벽 문: 위에서 본 두꺼운 문짝. 열면 위 기둥(경첩) 쪽으로 접히며 사라짐
 			node.position = Vector2(x, y + 2) * TILE
 			var cx := (x + 0.5) * TILE
-			var plank := _sprite("door_plank_v")
-			plank.position = Vector2(cx - plank.texture.get_width() / 2.0, y * TILE + 12) - node.position
-			closed.add_child(plank)
-			for py in [y * TILE, (y + 2) * TILE - 14]:
-				posts.append(Rect2(Vector2(x * TILE, py), Vector2(TILE, 14)))
-			leaf = _sprite("side_leaf")
-			var hinge := Vector2(cx + swing * 8, y * TILE + 22)   # 위 기둥 바로 아래, 방 쪽
-			node.position = Vector2(node.position.x, hinge.y)   # 앞뒤 정렬 기준 = 문짝이 선 자리
-			plank.position = Vector2(cx - plank.texture.get_width() / 2.0, y * TILE + 12) - node.position
-			leaf.position = hinge - node.position
-			leaf.offset = Vector2(0, -leaf.texture.get_height())
-			leaf.flip_h = swing < 0
-			if swing < 0:
-				leaf.offset.x = -leaf.texture.get_width()
+			leaf = _sprite("door_plank_v")
+			leaf.position = Vector2(cx - leaf.texture.get_width() / 2.0, y * TILE + 14) - node.position
+			for py in [y * TILE, (y + 2) * TILE - 16]:
+				posts.append(Rect2(Vector2(x * TILE, py), Vector2(TILE, 16)))
+			axis = "y"
 			rect = Rect2(Vector2(x * TILE, y * TILE), Vector2(TILE, 2 * TILE))
-			var lw := leaf.texture.get_width()
-			leaf_rect = Rect2(Vector2(hinge.x if swing > 0 else hinge.x - lw, hinge.y - 6), Vector2(lw, 8))
-		"h":   # 가로 벽 문: 위에서 본 문짝 두께. 열면 왼쪽 기둥에서 방 쪽으로 돌아감
+		"h":   # 가로 벽 문: 같은 문짝을 눕힌 것. 열면 왼쪽 기둥(경첩) 쪽으로 접히며 사라짐
 			node.position = Vector2(x, y + 1) * TILE
 			var cy := (y + 0.5) * TILE
-			var plank := _sprite("door_plank_h")
-			plank.position = Vector2(x * TILE + 12, cy - plank.texture.get_height() / 2.0) - node.position
-			closed.add_child(plank)
-			for px in [x * TILE, (x + 2) * TILE - 14]:
-				posts.append(Rect2(Vector2(px, y * TILE), Vector2(14, TILE)))
-			leaf = _sprite("door_plank_v")
-			var hinge := Vector2(x * TILE + 14, cy + swing * 6)
-			leaf.position = hinge - node.position + Vector2(-leaf.texture.get_width() / 2.0, 0)
-			leaf.flip_v = swing < 0
-			if swing < 0:
-				leaf.offset.y = -leaf.texture.get_height()
-			axis = "y"
+			leaf = _sprite("door_plank_h")
+			leaf.position = Vector2(x * TILE + 14, cy - leaf.texture.get_height() / 2.0) - node.position
+			for px in [x * TILE, (x + 2) * TILE - 16]:
+				posts.append(Rect2(Vector2(px, y * TILE), Vector2(16, TILE)))
+			axis = "x"
 			rect = Rect2(Vector2(x * TILE, y * TILE), Vector2(2 * TILE, TILE))
-			var lh := leaf.texture.get_height()
-			leaf_rect = Rect2(Vector2(hinge.x - 5, hinge.y if swing > 0 else hinge.y - lh), Vector2(10, lh))
 		"f":   # 정면 문: 문틀은 그대로, 문짝이 경첩(왼쪽) 쪽으로 접히며 열림
 			node.position = Vector2(x + 1, y + 4) * TILE
 			var sprite_name: String = d.get("sprite", "door")
@@ -297,7 +277,10 @@ func _add_door(d: Dictionary) -> void:
 	node.add_child(leaf)
 	for pr in posts:   # 문틀 기둥: 그림 + 언제나 막힘
 		var post := _sprite("door_post")
-		post.position = pr.get_center() - post.texture.get_size() / 2.0 - node.position
+		post.centered = true
+		post.position = pr.get_center() - node.position
+		if type == "h":
+			post.rotation = PI / 2
 		node.add_child(post)
 	var fixed := StaticBody2D.new()
 	for pr in posts:
@@ -321,26 +304,29 @@ func _set_door(door: Dictionary, open: bool, animate := true) -> void:
 	door["open"] = open
 	var leaf: Sprite2D = door["leaf"]
 	var type: String = door["type"]
-	# 정면 문: 닫힘 = 문짝 폭 1, 열림 = 0 (경첩 쪽으로 접힘). 옆·가로 문: 닫힘 = 0, 열림 = 1 (방 안으로 펼쳐짐)
-	var target := (0.0 if open else 1.0) if type == "f" else (1.0 if open else 0.0)
 	var prop := "scale:x" if door["axis"] == "x" else "scale:y"
+	# 정면 문: 문짝이 경첩 쪽으로 접힘(폭 1 → 0). 옆·가로 문: 문짝이 경첩 쪽으로 접히며 흐려짐
+	var target := 0.0 if open else 1.0
+	var alpha := 1.0
+	if type != "f":
+		target = 0.25 if open else 1.0
+		alpha = 0.0 if open else 1.0
 	if door["tween"]:
 		(door["tween"] as Tween).kill()
-	if type != "f":
-		door["closed"].visible = not open
 	if animate:
-		leaf.visible = true
-		var tw := create_tween()
-		tw.tween_property(leaf, prop, target, 0.18).set_trans(Tween.TRANS_SINE)
-		if type == "f" and not open:
-			door["closed"].visible = true
-		elif type == "f":
-			tw.tween_callback(func(): door["closed"].visible = false)
+		var tw := create_tween().set_parallel(true)
+		tw.tween_property(leaf, prop, target, 0.2).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(leaf, "modulate:a", alpha, 0.2)
+		if type == "f":
+			if open:
+				tw.chain().tween_callback(func(): door["closed"].visible = false)
+			else:
+				door["closed"].visible = true
 		door["tween"] = tw
 	else:
 		leaf.set_indexed(NodePath(prop), target)
-		if type == "f":
-			door["closed"].visible = not open
+		leaf.modulate.a = alpha
+		door["closed"].visible = not open
 	(door["body"].get_child(0) as CollisionShape2D).set_deferred("disabled", open)
 	if door["leaf_body"].get_child_count() > 0:
 		(door["leaf_body"].get_child(0) as CollisionShape2D).set_deferred("disabled", not open)
