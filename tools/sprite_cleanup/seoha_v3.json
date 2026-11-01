@@ -508,6 +508,15 @@
       "legs": "src/v3/seoha_legs_down_step.jpg",
       "fps": 6,
       "hands": 2
+    },
+    {
+      "name": "walk_right",
+      "idle": "idle_right",
+      "legs": "src/v3/seoha_legs_right_step.jpg",
+      "fps": 6,
+      "hands": 2,
+      "side": true,
+      "mirror_as": "walk_left"
     }
   ]
 }

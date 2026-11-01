@@ -94,7 +94,61 @@ def lift_leg(sa, s_hem, side, n):
     return out
 
 
-def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0):
+def swing_hand_side(img, sa, s_hem, dx):
+    """옆모습: 보이는 손(소매 끝 포함)을 앞뒤로 dx px 옮긴다."""
+    from scipy import ndimage as ndi
+    a = sa.astype(int)
+    al = a[..., 3] > 0
+    skin = (a[..., 3] > 128) & (a[..., 0] > 200) & (a[..., 1] > 150) & (a[..., 2] > 130) & (a[..., 0] - a[..., 2] > 25)
+    skin[: s_hem - 40] = False
+    skin[s_hem - 1:] = False
+    lab, n = ndi.label(skin)
+    if n == 0:
+        return img.copy()
+    sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
+    ys, xs = np.nonzero(lab == np.argmax(sizes) + 1)
+    y0, y1, x0, x1 = ys.min() - 2, ys.max() + 3, xs.min() - 3, xs.max() + 4
+    white = (a[..., 0] > 200) & (a[..., 1] > 200) & (a[..., 2] > 200) & (a[..., 2] >= a[..., 0] - 5)
+    m = np.zeros(al.shape, bool)
+    m[y0:y1, x0:x1] = True
+    m &= al & ~white
+    out = img.copy()
+    cy, cx = np.nonzero(m)
+    px = sa[cy, cx].copy()
+    # 손이 있던 자리는 카디건으로 덮음 (손 바로 위 카디건 줄을 아래로 늘림)
+    out[cy, cx] = 0
+    under = ~m & al
+    for y, x in zip(cy, cx):
+        yy = y
+        while yy > 0 and not (under[yy, x] and not skin[yy, x]):
+            yy -= 1
+        if a[y, x, 3] > 0 and not skin[y, x]:
+            out[y, x] = sa[y, x]
+    nx = cx + dx
+    ok = (nx >= 0) & (nx < out.shape[1])
+    keep = skin[cy, cx] | (px[:, 3] > 0)
+    out[cy[ok & keep], nx[ok & keep]] = px[ok & keep]
+    return out
+
+
+def finish(out, meta, name, frames, cw, ch, fps, mirror_as, msg):
+    sheet = Image.new("RGBA", (cw * len(frames), ch), (0, 0, 0, 0))
+    for i, f in enumerate(frames):
+        sheet.alpha_composite(f, (i * cw, 0))
+    sheet.save(out / f"{name}.png")
+    meta["animations"][name] = {"frames": len(frames), "cell": [cw, ch], "fps": fps, "loop": True}
+    if mirror_as:
+        sheet.transpose(Image.FLIP_LEFT_RIGHT)
+        mir = Image.new("RGBA", sheet.size, (0, 0, 0, 0))
+        for i, f in enumerate(frames):
+            mir.alpha_composite(f.transpose(Image.FLIP_LEFT_RIGHT), (i * cw, 0))
+        mir.save(out / f"{mirror_as}.png")
+        meta["animations"][mirror_as] = dict(meta["animations"][name])
+    (out / "frames.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(msg)
+
+
+def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0, side=False, mirror_as=None):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -214,6 +268,11 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0)
                 step[y][xs[ok]] = tgt
         top_cut = chin
 
+    if hands and side:
+        a1 = swing_hand_side(step, sa, s_hem, hands)
+        a2 = swing_hand_side(step, sa, s_hem, -hands)
+        frames = [Image.fromarray(a1, "RGBA"), stand, Image.fromarray(a2, "RGBA"), stand]
+        return finish(out, meta, name, frames, cw, ch, fps, mirror_as, f"{name}: 4칸 (옆모습, 다리 배율 x{k2:.2f})")
     if hands:
         # 팔 흔들림: 정지 그림의 손만 옮김 (화면 오른쪽 손 = 앞으로 → 아래로, 왼쪽 손 = 뒤로 → 소매 속으로 위로)
         step = swing_hands(step, sa, s_hem, hands)

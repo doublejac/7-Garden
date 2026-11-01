@@ -59,21 +59,21 @@
       "loop": true
     },
     "walk_right": {
-      "frames": 8,
+      "frames": 4,
       "cell": [
         108,
         157
       ],
-      "fps": 10,
+      "fps": 6,
       "loop": true
     },
     "walk_left": {
-      "frames": 8,
+      "frames": 4,
       "cell": [
         108,
         157
       ],
-      "fps": 10,
+      "fps": 6,
       "loop": true
     },
     "take_pill": {
