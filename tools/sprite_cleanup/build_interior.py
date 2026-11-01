@@ -245,6 +245,7 @@ def build_props():
         save(name, fogify(Image.open(SRC / "legacy_props" / f"{name}.png").convert("RGBA")))
     build_doors(save)
     build_front_doors(save)
+    build_side_door(save)
     (OUT_PROPS / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
 
@@ -294,6 +295,24 @@ def build_front_doors(save):
     save("threshold", hq_resize_xy(th, 2 * T - 8, 26))
     mat = Image.fromarray(key(np.array(img.crop(FRONT_MAT))), "RGBA")
     save("door_mat", hq_resize(mat, 120 / mat.width))
+
+
+SIDE_SRC = "haemu_side_door.jpg"
+SIDE_LEAF = (121, 81, 1847, 475)        # 위에서 본 문짝 (왼쪽 끝 = 경첩, 오른쪽 끝 = 손잡이)
+SIDE_THRESHOLD = (445, 1044, 1499, 1498)
+
+
+def build_side_door(save):
+    """옆벽 문: Gemini가 위에서 본 문짝·문지방을 그린 것을 세로로 세워 씀.
+    side_leaf_v: 경첩이 위, 길이 = 문 자리 2칸 - 8px.  side_threshold_v: 폭 1칸 × 2칸."""
+    img = Image.open(SRC / SIDE_SRC).convert("RGB")
+    leaf = Image.fromarray(key(np.array(img.crop(SIDE_LEAF))), "RGBA")
+    leaf = leaf.crop(leaf.getbbox()).transpose(Image.ROTATE_270)     # 경첩(왼쪽 끝)이 위로
+    leaf = hq_resize(leaf, (2 * T - 8) / leaf.height)
+    save("side_leaf_v", leaf)
+    th = Image.fromarray(key(np.array(img.crop(SIDE_THRESHOLD))), "RGBA")
+    th = th.crop(th.getbbox()).transpose(Image.ROTATE_90)
+    save("side_threshold_v", hq_resize_xy(th, T, 2 * T))
 
 
 def build_doors(save):

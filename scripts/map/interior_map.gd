@@ -227,14 +227,22 @@ func _add_door(d: Dictionary) -> void:
 	var posts: Array[Rect2] = []         # 언제나 막는 문틀 기둥 (맵 좌표)
 	var axis := "x"
 	match type:
-		"v":   # 세로 벽 문: 위에서 본 두꺼운 문짝. 열면 위 기둥(경첩) 쪽으로 접히며 사라짐
-			node.position = Vector2(x, y + 2) * TILE
-			var cx := (x + 0.5) * TILE
-			leaf = _sprite("door_plank_v")
-			leaf.position = Vector2(cx - leaf.texture.get_width() / 2.0, y * TILE + 14) - node.position
-			for py in [y * TILE, (y + 2) * TILE - 16]:
-				posts.append(Rect2(Vector2(x * TILE, py), Vector2(TILE, 16)))
-			axis = "y"
+		"v":   # 세로 벽 문: 위에서 본 문짝이 위 경첩을 축으로 돌아, 방 쪽 벽면에 납작하게 붙으며 열림
+			node.position = Vector2(x, y) * TILE + Vector2(0, 4)   # 앞뒤 정렬 기준 = 경첩 (열린 문짝은 지나가는 서하 뒤에)
+			var sill := _sprite("side_threshold_v")   # 문 자리 바닥의 문지방
+			sill.position = Vector2(x, y) * TILE - node.position
+			sill.z_index = -1
+			node.add_child(sill)
+			leaf = _sprite("side_leaf_v")
+			var lw := leaf.texture.get_width()
+			# 경첩 = 문 자리 위 끝, 방 쪽 벽 가장자리 (닫히면 문짝이 벽 선에 맞춰 섬)
+			var hinge := Vector2((x + 0.5) * TILE + swing * (TILE / 2.0 - lw / 2.0 - 4), y * TILE + 4)
+			leaf.position = hinge - node.position
+			leaf.offset = Vector2(-lw / 2.0, 0)
+			leaf.set_meta("open_rot", -PI if swing > 0 else PI)
+			for py in [y * TILE, (y + 2) * TILE - 12]:
+				posts.append(Rect2(Vector2(x * TILE, py), Vector2(TILE, 12)))
+			axis = "rot"
 			rect = Rect2(Vector2(x * TILE, y * TILE), Vector2(TILE, 2 * TILE))
 		"h":   # 가로 벽 문: 같은 문짝을 눕힌 것. 열면 왼쪽 기둥(경첩) 쪽으로 접히며 사라짐
 			node.position = Vector2(x, y + 1) * TILE
@@ -322,8 +330,16 @@ func _set_door(door: Dictionary, open: bool, animate := true) -> void:
 			door["tween"] = tw
 		else:
 			leaf.texture = frames[last if open else 0]
+	elif door["axis"] == "rot":
+		var to: float = leaf.get_meta("open_rot") if open else 0.0
+		if animate:
+			var tw := create_tween()
+			tw.tween_property(leaf, "rotation", to, 0.28).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			door["tween"] = tw
+		else:
+			leaf.rotation = to
 	else:
-		# 옆·가로 문: 문짝이 경첩 쪽으로 접히며 흐려짐
+		# 가로 문: 문짝이 경첩 쪽으로 접히며 흐려짐
 		var prop := "scale:x" if door["axis"] == "x" else "scale:y"
 		var target := 0.25 if open else 1.0
 		var alpha := 0.0 if open else 1.0

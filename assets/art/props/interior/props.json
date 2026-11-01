@@ -282,5 +282,13 @@
   "door_mat": [
     120,
     77
+  ],
+  "side_leaf_v": [
+    27,
+    120
+  ],
+  "side_threshold_v": [
+    64,
+    128
   ]
 }
