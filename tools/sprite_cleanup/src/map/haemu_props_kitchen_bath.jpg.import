@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bpeis8p37gk70"
-path="res://.godot/imported/glass_door.png-15496eacc90ee75955f8e9e018553f0d.ctex"
+uid="uid://cmh0x4anc6q2d"
+path="res://.godot/imported/haemu_props_kitchen_bath.jpg-5d117a3f5b9ebacad879e0d0eef393da.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/props/interior/glass_door.png"
-dest_files=["res://.godot/imported/glass_door.png-15496eacc90ee75955f8e9e018553f0d.ctex"]
+source_file="res://tools/sprite_cleanup/src/map/haemu_props_kitchen_bath.jpg"
+dest_files=["res://.godot/imported/haemu_props_kitchen_bath.jpg-5d117a3f5b9ebacad879e0d0eef393da.ctex"]
 
 [params]
 

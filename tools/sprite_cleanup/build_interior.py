@@ -65,7 +65,50 @@ PROPS = {
     "frame_photo": ((1044, 2099, 1264, 2302), 0.26),
     "frame_empty": ((1474, 2099, 1692, 2302), 0.26),
 }
-LEGACY = ["mirror", "sink", "desk", "sofa", "dining_table", "door_b",
+# 2차 가구 시트들: (원본 파일, 상자, 맞출 크기 ("w"|"h", px), 조각 모두 유지?)
+PROPS2 = {
+    # 원장실·투약실·로비·철문 (haemu_props_office.jpg)
+    "director_desk": ("haemu_props_office.jpg", (59, 61, 700, 624), ("w", 192)),
+    "bookshelf": ("haemu_props_office.jpg", (759, 61, 1186, 624), ("w", 128)),
+    "certificate": ("haemu_props_office.jpg", (1546, 178, 1730, 323), ("w", 48)),
+    "certificate_b": ("haemu_props_office.jpg", (1540, 442, 1736, 586), ("w", 48)),
+    "med_cabinet": ("haemu_props_office.jpg", (55, 686, 450, 1200), ("w", 128)),
+    "clock": ("haemu_props_office.jpg", (1535, 660, 1725, 1200), ("w", 60)),
+    "fireplace": ("haemu_props_office.jpg", (867, 720, 1439, 1196), ("w", 192)),
+    "med_cart": ("haemu_props_office.jpg", (535, 881, 778, 1199), ("w", 62)),
+    "entrance_door": ("haemu_props_office.jpg", (55, 1255, 636, 1808), ("h", 184)),
+    "steel_door": ("haemu_props_office.jpg", (1375, 1255, 1737, 1805), ("h", 184)),
+    "umbrella_stand": ("haemu_props_office.jpg", (716, 1456, 907, 1799), ("w", 52)),
+    "door_mat": ("haemu_props_office.jpg", (934, 1620, 1322, 1794), ("w", 128)),
+    # 정면으로 다시 받은 것
+    "sofa": ("haemu_sofa.jpg", (108, 115, 2445, 1186), ("w", 200)),
+    "dining_table": ("haemu_dining_table.jpg", (191, 92, 2030, 1939), ("w", 168)),
+    "file_cabinet": ("haemu_file_cabinet.jpg", (216, 191, 1611, 2284), ("w", 62)),
+    # 주방·욕실 (haemu_props_kitchen_bath.jpg)
+    "kitchen_counter": ("haemu_props_kitchen_bath.jpg", (112, 53, 1680, 569), ("w", 288)),
+    "stove": ("haemu_props_kitchen_bath.jpg", (230, 668, 666, 1310), ("w", 112)),
+    "cupboard_glass": ("haemu_props_kitchen_bath.jpg", (988, 668, 1606, 1499), ("w", 124)),
+    "cupboard": ("haemu_props_kitchen_bath.jpg", (95, 1429, 649, 2293), ("w", 112)),
+    "bath_sink": ("haemu_props_kitchen_bath.jpg", (1001, 1622, 1239, 2010), ("w", 56)),
+    "bath_mirror": ("haemu_props_kitchen_bath.jpg", (1436, 1648, 1703, 1980), ("w", 52)),
+    "toilet": ("haemu_props_kitchen_bath.jpg", (1462, 2022, 1673, 2398), ("w", 48)),
+    "bath_mirror_sq": ("haemu_props_kitchen_bath.jpg", (977, 2051, 1267, 2343), ("w", 56)),
+    # 채린 방·보호자실·빈 병실 (haemu_props_rooms.jpg)
+    "chaerin_bed": ("haemu_props_rooms.jpg", (154, 132, 566, 762), ("w", 128)),
+    "vanity": ("haemu_props_rooms.jpg", (835, 125, 1213, 777), ("w", 116)),
+    "crayon_drawings": ("haemu_props_rooms.jpg", (1368, 134, 1898, 352), ("w", 132), True),
+    "scrapbook_table": ("haemu_props_rooms.jpg", (1445, 467, 1837, 714), ("w", 112)),
+    "doll_shelf": ("haemu_props_rooms.jpg", (145, 846, 576, 1227), ("w", 120), True),
+    "cot": ("haemu_props_rooms.jpg", (805, 861, 1100, 1392), ("w", 96)),
+    "cot_empty": ("haemu_props_rooms.jpg", (1163, 861, 1433, 1392), ("w", 90)),
+    "camcorder_side": ("haemu_props_rooms.jpg", (1651, 842, 1821, 1212), ("h", 116)),
+    "bed_bare": ("haemu_props_rooms.jpg", (1528, 1276, 1904, 1899), ("w", 128)),
+    "camcorder": ("haemu_props_rooms.jpg", (150, 1373, 367, 1899), ("h", 116)),
+    "covered_furniture": ("haemu_props_rooms.jpg", (1031, 1523, 1448, 1894), ("w", 120)),
+    "tape_box": ("haemu_props_rooms.jpg", (415, 1655, 626, 1838), ("w", 54)),
+    "suitcase_open": ("haemu_props_rooms.jpg", (692, 1573, 983, 1884), ("w", 88)),
+}
+LEGACY = ["mirror", "sink", "desk", "door_b",
           "side_door_closed", "side_door_open", "side_door_closed_h", "side_door_open_h"]
 
 
@@ -90,10 +133,10 @@ def key(rgb):
     return np.dstack([r, g2, b, alpha * 255]).clip(0, 255).astype(np.uint8)
 
 
-def cut(img_rgb, box):
+def cut(img_rgb, box, keep_all=False):
     rgba = key(np.array(img_rgb.crop(box)))
     lab, n = ndi.label(rgba[..., 3] > 30)
-    if n > 1:   # 옆 물건에서 묻어 온 조각 제거 (가장 큰 덩어리의 15% 미만)
+    if n > 1 and not keep_all:   # 옆 물건에서 묻어 온 조각 제거 (가장 큰 덩어리의 15% 미만)
         sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
         keep = np.isin(lab, [i + 1 for i, s in enumerate(sizes) if s >= sizes.max() * 0.15])
         rgba[~keep] = 0
@@ -194,6 +237,13 @@ def build_props():
     tiles = Image.open(SRC / TILE_SRC).convert("RGB")
     rug = tiles.crop((RUG[0] + 6, RUG[1] + 6, RUG[2] - 6, RUG[3] - 6)).resize((3 * T, 2 * T), Image.LANCZOS)
     save("rug", rug.convert("RGBA"))
+    cache = {}
+    for name, spec in PROPS2.items():
+        src, box, (axis, px) = spec[0], spec[1], spec[2]
+        if src not in cache:
+            cache[src] = Image.open(SRC / src).convert("RGB")
+        im = cut(cache[src], box, keep_all=len(spec) > 3 and spec[3])
+        save(name, hq_resize(im, px / (im.width if axis == "w" else im.height)))
     for name in LEGACY:
         save(name, fogify(Image.open(SRC / "legacy_props" / f"{name}.png").convert("RGBA")))
     (OUT_PROPS / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")

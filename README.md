@@ -53,11 +53,11 @@ tests/         test_runner.tscn  자동 점검
 - `scenes/maps/int_main.tscn`: 본관 1층 (병동 4실, 병동 복도, 중앙 복도, 식당, 주방, 원장실, 투약실, 로비, 현관, 철문). F6으로 단독 실행.
   - 방향키 걷기 · E 문 열기/닫기 · L 방 이름 · T 시간대(아침/낮/저녁/밤) · V 조명 톤(1회차 따뜻하게/평소/2회차 차갑게) · F 화면 가장자리 안개(0~2단계) · Z 확대(100/75/50%) · G 격자 · Esc
   - 문 종류: 세로 벽 문(v), 가로 벽 문(h), 정면 벽 문(f). 철문은 잠겨 있음. 서하가 문 자리에 서 있으면 닫히지 않음.
-  - 주방 조리대, 투약실 약장, 원장실 책장, 철문 등은 아직 기존 가구(옷장·나무 문)로 자리만 잡아 둠.
+  - 서하 방에는 작은 욕실(세면대·거울·변기)이 딸려 있음. 로비 현관 옆 우산꽂이의 노란 우산은 3일 차 단서.
 - 그림: `assets/art/tiles/interior.png`(64px 타일), `assets/art/props/interior/`(가구).
   그림체는 해무 톤(기준 견본 `tools/sprite_cleanup/src/map/style_haemu_reference.jpg`). 그림은 한 벌만 두고 분위기는 조명 톤과 안개(`shaders/sea_fog.gdshader`)로 바꿉니다.
   Gemini 원본은 `tools/sprite_cleanup/src/map/`, 정리는 `python3 tools/sprite_cleanup/build_interior.py`.
-  아직 해무 톤으로 다시 받지 않은 가구(거울·세면대·책상·소파·식탁·철문 자리·옆벽 문)는 `src/map/legacy_props/`의 예전 그림을 색만 바꿔 씁니다.
+  아직 해무 톤으로 다시 받지 않은 가구(옆벽 문, 투약실 세면대 등 몇 개)는 `src/map/legacy_props/`의 예전 그림을 색만 바꿔 씁니다.
   타일 시트는 Gemini 한 칸을 타일 2×2칸(128px)으로 씁니다. 벽 앞면은 3칸(몰딩/회벽/판벽), 벽 윗면은 이웃을 보고 16종 자동.
 
 ## 아직 할 일

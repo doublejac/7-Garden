@@ -59,6 +59,150 @@
     192,
     128
   ],
+  "director_desk": [
+    192,
+    169
+  ],
+  "bookshelf": [
+    128,
+    169
+  ],
+  "certificate": [
+    48,
+    38
+  ],
+  "certificate_b": [
+    48,
+    35
+  ],
+  "med_cabinet": [
+    128,
+    167
+  ],
+  "clock": [
+    60,
+    171
+  ],
+  "fireplace": [
+    192,
+    160
+  ],
+  "med_cart": [
+    62,
+    81
+  ],
+  "entrance_door": [
+    193,
+    184
+  ],
+  "steel_door": [
+    121,
+    184
+  ],
+  "umbrella_stand": [
+    52,
+    93
+  ],
+  "door_mat": [
+    128,
+    57
+  ],
+  "sofa": [
+    200,
+    92
+  ],
+  "dining_table": [
+    168,
+    169
+  ],
+  "file_cabinet": [
+    62,
+    93
+  ],
+  "kitchen_counter": [
+    288,
+    95
+  ],
+  "stove": [
+    112,
+    165
+  ],
+  "cupboard_glass": [
+    124,
+    167
+  ],
+  "cupboard": [
+    112,
+    175
+  ],
+  "bath_sink": [
+    56,
+    91
+  ],
+  "bath_mirror": [
+    52,
+    65
+  ],
+  "toilet": [
+    48,
+    86
+  ],
+  "bath_mirror_sq": [
+    56,
+    56
+  ],
+  "chaerin_bed": [
+    128,
+    196
+  ],
+  "vanity": [
+    116,
+    200
+  ],
+  "crayon_drawings": [
+    132,
+    53
+  ],
+  "scrapbook_table": [
+    112,
+    71
+  ],
+  "doll_shelf": [
+    120,
+    106
+  ],
+  "cot": [
+    96,
+    173
+  ],
+  "cot_empty": [
+    90,
+    177
+  ],
+  "camcorder_side": [
+    53,
+    116
+  ],
+  "bed_bare": [
+    128,
+    212
+  ],
+  "camcorder": [
+    48,
+    116
+  ],
+  "covered_furniture": [
+    120,
+    107
+  ],
+  "tape_box": [
+    54,
+    47
+  ],
+  "suitcase_open": [
+    88,
+    94
+  ],
   "mirror": [
     85,
     84
@@ -70,14 +214,6 @@
   "desk": [
     103,
     118
-  ],
-  "sofa": [
-    217,
-    97
-  ],
-  "dining_table": [
-    148,
-    148
   ],
   "door_b": [
     133,
