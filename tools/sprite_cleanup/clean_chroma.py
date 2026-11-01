@@ -301,7 +301,7 @@ def main(cfg_path, out_dir):
     for cw_opt in cfg.get("compose_walks", []):
         from compose_walk import main as compose
         compose(out, cw_opt["name"], cw_opt["idle"], str(Path(cfg_path).parent / cw_opt["legs"]), cw_opt.get("fps", 6),
-                cw_opt.get("body", False))
+                cw_opt.get("body", False), cw_opt.get("hands", 0))
 
 
 def breathe(path, n, cw, ch, idx):

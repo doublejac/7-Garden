@@ -22,7 +22,50 @@ def hem_row(a):
     return int(np.nonzero(white.sum(1) >= 6)[0].max())
 
 
-def main(out_dir, name, idle_name, legs_src, fps=6, body=False):
+def swing_hands(img, sa, s_hem, amount):
+    """정지 그림 sa에서 양손(피부색 덩어리, 몸 양옆 밑단 근처)을 찾아 img에서 옮긴다.
+    amount > 0: 화면 오른쪽 손이 아래로(앞으로), 왼쪽 손이 위로(소매 속으로). 음수면 반대."""
+    from scipy import ndimage as ndi
+    a = sa.astype(int)
+    al = a[..., 3] > 128
+    skin = al & (a[..., 0] > 200) & (a[..., 1] > 150) & (a[..., 2] > 130) & (a[..., 0] - a[..., 2] > 25)
+    skin[: s_hem - 40] = False
+    skin[s_hem + 3:] = False
+    lab, n = ndi.label(skin)
+    if n < 2:
+        return img
+    sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
+    blobs = sorted(np.argsort(sizes)[-2:] + 1, key=lambda i: np.nonzero(lab == i)[1].mean())
+    out = img.copy()
+    white = al & (a[..., 0] > 200) & (a[..., 1] > 200) & (a[..., 2] > 200)
+    for side, i in zip((-1, 1), blobs):            # 왼쪽 손, 오른쪽 손
+        ys, xs = np.nonzero(lab == i)
+        y0, y1 = ys.min() - 8, ys.max() + 3          # 소매 끝부분 + 손 (외곽선 포함)
+        x0, x1 = xs.min() - 2, xs.max() + 3
+        m = np.zeros(al.shape, bool)
+        m[y0:y1, x0:x1] = True
+        m &= al & ~white                             # 원피스는 빼고 소매·손·외곽선만
+        dy = amount * side                           # 오른쪽 손: +amount(아래), 왼쪽: -amount(위)
+        cy, cx = np.nonzero(m)
+        px = sa[cy, cx].copy()
+        out[cy, cx] = 0
+        ny = cy + dy
+        ok = (ny >= 0) & (ny < out.shape[0])
+        out[ny[ok], cx[ok]] = px[ok]
+        if dy > 0:   # 아래로 내려간 덩어리 위 틈은 덩어리 윗줄을 늘려 메움 (소매가 길어짐)
+            for k in range(dy):
+                row = cy == y0 + 0
+                rr = np.nonzero(m[y0])[0]
+                out[y0 + k, rr] = sa[y0, rr]
+        else:        # 위로 올라간 자리 아래는 비워 둠 (원래 원피스였던 곳은 다시 그림)
+            pass
+        keep = white[y0:y1 + 4, x0:x1]
+        reg = out[y0:y1 + 4, x0:x1]
+        reg[keep & (reg[..., 3] == 0)] = sa[y0:y1 + 4, x0:x1][keep & (reg[..., 3] == 0)]
+    return out
+
+
+def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -125,11 +168,17 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False):
                 step[y][xs[ok]] = tgt
         top_cut = chin
 
+    if hands:
+        # 팔 흔들림: 정지 그림의 손만 옮김 (화면 오른쪽 손 = 앞으로 → 아래로, 왼쪽 손 = 뒤로 → 소매 속으로 위로)
+        step = swing_hands(step, sa, s_hem, hands)
+
     # 반대 발: 다리(와 몸) 부분만 좌우 반전 (몸 가운데 기준)
     other = step.copy()
     xs = np.nonzero((step[top_cut:, :, 3] > 128).any(0))[0]
     a0, a1 = xs[0], xs[-1] + 1
     other[top_cut:, a0:a1] = step[top_cut:, a0:a1][:, ::-1]
+    if hands:   # 반대 발 칸은 손 흔들림도 반대로 (다리만 뒤집었으므로 손은 따로)
+        other[:top_cut] = swing_hands(sa.copy(), sa, s_hem, -hands)[:top_cut]
 
     frames = [Image.fromarray(step, "RGBA"), stand, Image.fromarray(other, "RGBA"), stand]
     sheet = Image.new("RGBA", (cw * 4, ch), (0, 0, 0, 0))
