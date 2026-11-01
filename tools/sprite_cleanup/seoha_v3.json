@@ -500,5 +500,13 @@
         ]
       ]
     }
+  ],
+  "compose_walks": [
+    {
+      "name": "walk_down",
+      "idle": "idle",
+      "legs": "src/v3/seoha_legs_down_step.jpg",
+      "fps": 6
+    }
   ]
 }
