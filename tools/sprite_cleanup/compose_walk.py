@@ -31,6 +31,10 @@ def swing_hands(img, sa, s_hem, amount):
     skin = al & (a[..., 0] > 200) & (a[..., 1] > 150) & (a[..., 2] > 130) & (a[..., 0] - a[..., 2] > 25)
     skin[: s_hem - 40] = False
     skin[s_hem + 3:] = False
+    # 다리(원피스 밑으로 보이는 피부)는 제외: 손은 원피스 폭 바깥쪽에 있음
+    wr = np.nonzero((al & (a[..., 0] > 200) & (a[..., 1] > 200) & (a[..., 2] > 200))[s_hem])[0]
+    if wr.size:
+        skin[:, wr[0] + 3:wr[-1] - 2] = False
     lab, n = ndi.label(skin)
     if n < 2:
         return img
@@ -44,7 +48,7 @@ def swing_hands(img, sa, s_hem, amount):
         x0, x1 = xs.min() - 2, xs.max() + 3
         m = np.zeros(al.shape, bool)
         m[y0:y1, x0:x1] = True
-        m &= al & ~white                             # 원피스는 빼고 소매·손·외곽선만
+        m &= (a[..., 3] > 0) & ~white                # 원피스는 빼고 소매·손·외곽선만 (반투명 가장자리 포함)
         dy = amount * side                           # 오른쪽 손: +amount(아래), 왼쪽: -amount(위)
         cy, cx = np.nonzero(m)
         px = sa[cy, cx].copy()
