@@ -281,16 +281,38 @@ def main(cfg_path, out_dir):
                                     "fps": anim.get("fps", 6), "loop": anim.get("loop", True)}
 
     for anim in cfg["animations"]:
+        if anim["name"].startswith("_"):   # 크기 기준 전용 (게임에 안 씀)
+            continue
         fr = scaled[anim["name"]]
         write(anim["name"], fr, anim)
         if anim.get("mirror_as"):
             write(anim["mirror_as"], [f.transpose(Image.FLIP_LEFT_RIGHT) for f in fr], anim)
+        if anim.get("breath"):
+            for nm in (anim["name"], anim.get("mirror_as")):
+                if nm:
+                    breathe(out / f"{nm}.png", len(fr), cell_w, cell_h, anim["breath"])
         if anim.get("steady_head"):
             for nm in (anim["name"], anim.get("mirror_as")):
                 if nm:
                     steady_head(out / f"{nm}.png", len(fr), cell_w, cell_h, anim["steady_head"])
     (out / "frames.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"칸 크기 {cell_w}x{cell_h}, 동작 {len(meta['animations'])}개")
+
+
+def breathe(path, n, cw, ch, idx):
+    """숨쉬기: idx 칸들은 다리 위(원피스 밑단 위) 전체를 1px 아래로 내림."""
+    sheet = Image.open(path).convert("RGBA")
+    out = sheet.copy()
+    for i in idx:
+        a = np.array(sheet.crop((i * cw, 0, i * cw + cw, ch)))
+        al = a[..., 3] > 128
+        white = al & (a[..., 0] > 215) & (a[..., 1] > 215) & (a[..., 2] > 215)
+        hem = np.nonzero(white.sum(1) >= 6)[0].max() + 1
+        b = a.copy()
+        b[1:hem + 1] = a[0:hem]
+        b[0] = 0
+        out.paste(Image.fromarray(b, "RGBA"), (i * cw, 0))
+    out.save(path)
 
 
 def steady_head(path, n, cw, ch, opt):
