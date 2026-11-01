@@ -184,7 +184,19 @@
         ]
       ],
       "head_ref": "idle",
-      "head_metric": "both"
+      "head_metric": "both",
+      "steady_head": {
+        "bob": [
+          0,
+          2,
+          1,
+          0,
+          0,
+          2,
+          1,
+          0
+        ]
+      }
     },
     {
       "name": "walk_up",
@@ -234,7 +246,20 @@
         ]
       ],
       "head_ref": "idle_up",
-      "head_metric": "both"
+      "head_metric": "both",
+      "steady_head": {
+        "bob": [
+          0,
+          2,
+          1,
+          0,
+          0,
+          2,
+          1,
+          0
+        ],
+        "back": true
+      }
     },
     {
       "name": "walk_right",
@@ -285,7 +310,19 @@
         ]
       ],
       "head_ref": "idle_right",
-      "head_metric": "stature"
+      "head_metric": "stature",
+      "steady_head": {
+        "bob": [
+          0,
+          2,
+          1,
+          0,
+          0,
+          2,
+          1,
+          0
+        ]
+      }
     },
     {
       "name": "take_pill",

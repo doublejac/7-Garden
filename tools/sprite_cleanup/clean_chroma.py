@@ -285,8 +285,37 @@ def main(cfg_path, out_dir):
         write(anim["name"], fr, anim)
         if anim.get("mirror_as"):
             write(anim["mirror_as"], [f.transpose(Image.FLIP_LEFT_RIGHT) for f in fr], anim)
+        if anim.get("steady_head"):
+            for nm in (anim["name"], anim.get("mirror_as")):
+                if nm:
+                    steady_head(out / f"{nm}.png", len(fr), cell_w, cell_h, anim["steady_head"])
     (out / "frames.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"칸 크기 {cell_w}x{cell_h}, 동작 {len(meta['animations'])}개")
+
+
+def steady_head(path, n, cw, ch, opt):
+    """걷기처럼 머리를 매 칸 새로 그린 동작은 머리카락이 칸마다 달라 부르르 떨어 보인다.
+    첫 칸의 머리(턱 아래 몇 줄까지)를 모든 칸에 똑같이 붙이고, 위아래로만 bob(px)만큼 움직인다.
+    opt = {"bob": [..칸마다 px..], "back": 뒷모습이면 true (턱 대신 머리카락 높이로 자름)}"""
+    sheet = Image.open(path).convert("RGBA")
+    fs = [sheet.crop((i * cw, 0, i * cw + cw, ch)) for i in range(n)]
+
+    def chin(f):
+        a = np.array(f)
+        top = np.nonzero((a[..., 3] > 128).any(1))[0][0]
+        return top + hair_height(f) if opt.get("back") else chin_rows(f)[1]
+
+    chins = [chin(f) for f in fs]
+    head = fs[0].crop((0, 0, cw, max(chins) + 5))
+    bob = opt.get("bob", [0] * n)
+    out = Image.new("RGBA", sheet.size, (0, 0, 0, 0))
+    for i, f in enumerate(fs):
+        a = np.array(f)
+        a[:chins[i] - 3] = 0              # 이 칸의 머리를 지우고 (몸은 그대로)
+        g = Image.fromarray(a, "RGBA")
+        g.alpha_composite(head, (0, bob[i % len(bob)]))
+        out.alpha_composite(g, (i * cw, 0))
+    out.save(path)
 
 
 if __name__ == "__main__":
