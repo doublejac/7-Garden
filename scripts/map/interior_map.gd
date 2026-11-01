@@ -275,13 +275,7 @@ func _add_door(d: Dictionary) -> void:
 				closed.add_child(lintel)
 	node.add_child(closed)
 	node.add_child(leaf)
-	for pr in posts:   # 문틀 기둥: 그림 + 언제나 막힘
-		var post := _sprite("door_post")
-		post.centered = true
-		post.position = pr.get_center() - node.position
-		if type == "h":
-			post.rotation = PI / 2
-		node.add_child(post)
+	# 문틀 기둥: 그림은 벽 윗면 테두리가 대신하고, 충돌만 언제나 막음 (모서리로 빠져나가지 않게)
 	var fixed := StaticBody2D.new()
 	for pr in posts:
 		fixed.add_child(_box(Rect2(pr.position - node.position, pr.size)))
