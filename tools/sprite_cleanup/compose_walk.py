@@ -268,9 +268,9 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0,
                 step[y][xs[ok]] = tgt
         top_cut = chin
 
-    if hands and side:
-        a1 = swing_hand_side(step, sa, s_hem, hands)
-        a2 = swing_hand_side(step, sa, s_hem, -hands)
+    if side:
+        a1 = swing_hand_side(step, sa, s_hem, hands) if hands else step
+        a2 = swing_hand_side(step, sa, s_hem, -hands) if hands else step
         frames = [Image.fromarray(a1, "RGBA"), stand, Image.fromarray(a2, "RGBA"), stand]
         return finish(out, meta, name, frames, cw, ch, fps, mirror_as, f"{name}: 4칸 (옆모습, 다리 배율 x{k2:.2f})")
     if hands:
