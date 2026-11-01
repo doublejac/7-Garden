@@ -18,7 +18,7 @@ from PIL import Image, ImageEnhance
 from scipy import ndimage as ndi
 
 sys.path.insert(0, str(Path(__file__).parent))
-from clean_chroma import hq_resize  # noqa: E402
+from clean_chroma import hq_resize, hq_resize_xy  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = Path(__file__).parent / "src" / "map"
@@ -77,9 +77,7 @@ PROPS2 = {
     "fireplace": ("haemu_props_office.jpg", (867, 720, 1439, 1196), ("w", 192)),
     "med_cart": ("haemu_props_office.jpg", (535, 881, 778, 1199), ("w", 62)),
     "entrance_door": ("haemu_props_office.jpg", (55, 1255, 636, 1808), ("h", 184)),
-    "steel_door": ("haemu_props_office.jpg", (1375, 1255, 1737, 1805), ("h", 184)),
     "umbrella_stand": ("haemu_props_office.jpg", (716, 1456, 907, 1799), ("w", 52)),
-    "door_mat": ("haemu_props_office.jpg", (934, 1620, 1322, 1794), ("w", 128)),
     # 정면으로 다시 받은 것
     "sofa": ("haemu_sofa.jpg", (108, 115, 2445, 1186), ("w", 200)),
     "dining_table": ("haemu_dining_table.jpg", (191, 92, 2030, 1939), ("w", 168)),
@@ -246,7 +244,56 @@ def build_props():
     for name in LEGACY:
         save(name, fogify(Image.open(SRC / "legacy_props" / f"{name}.png").convert("RGBA")))
     build_doors(save)
+    build_front_doors(save)
     (OUT_PROPS / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+
+FRONT_SRC = "haemu_front_doors.jpg"
+WALL_CELL_H = 458          # 시트 한 칸의 벽 높이(몰딩 위 ~ 판벽 아래) → 게임 벽 앞면 3칸(192px)
+# 정면 문: 이름 → 상태별 [칸 위 y, 문틀 x0, 문틀 x1] (원본 좌표). 상태 = 닫힘, 반쯤 열림, 열림
+FRONT_DOORS = {
+    "room_door": [(24, 181, 438), (24, 798, 1058), (24, 1418, 1675)],          # 명패 달린 병실 문
+    "glass_door": [(533, 181, 438), (533, 798, 1058), (533, 1418, 1675)],      # 유리창 문 (식당·주방)
+    "steel_door": [(1039, 177, 445)],                                           # 철문 (늘 잠김)
+    "double_door": [(1545, 98, 523), (1545, 687, 1164), (1545, 1302, 1779)],    # 이중문
+}
+THRESHOLD = (487, 2107, 843, 2194)
+FRONT_MAT = (1015, 2053, 1370, 2281)
+
+
+def build_front_doors(save):
+    """정면 문: 문틀 폭만큼, 벽 맨 위(몰딩)부터 문 아래 끝까지 잘라 벽 앞면 높이(192px)에 맞춤.
+    상태마다 문틀 크기가 조금씩 달라도 닫힌 문 크기로 맞춰 겹치면 애니메이션이 됨.
+    열린 틈의 어둠은 반투명으로 (문을 지나는 서하가 희미하게 보이게)."""
+    img = Image.open(SRC / FRONT_SRC).convert("RGB")
+    k = 3 * T / WALL_CELL_H
+    for name, states in FRONT_DOORS.items():
+        size = None
+        for i, (top, fx0, fx1) in enumerate(states):
+            a = np.array(img.crop((fx0, top, fx1, top + WALL_CELL_H + 45))).astype(int)
+            green = (a[..., 1] - np.maximum(a[..., 0], a[..., 2])) > 40
+            rows = np.nonzero((~green).any(1))[0]
+            box = (fx0, top, fx1, top + rows[-1] + 1)
+            im = Image.fromarray(key(np.array(img.crop(box))), "RGBA")
+            if size is None:
+                size = (round(im.width * k), round(WALL_CELL_H * k))
+            w = size[0]
+            h = round(im.height * size[1] / WALL_CELL_H)
+            im = hq_resize_xy(im, w, h)
+            arr = np.array(im)
+            lum = arr[..., :3].astype(int).sum(2) / 3
+            lab, n = ndi.label((lum < 45) & (arr[..., 3] > 0))
+            if n:
+                sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
+                for j, sz in enumerate(sizes):
+                    if sz > 600:   # 넓은 어둠 = 열린 문틈
+                        arr[..., 3][lab == j + 1] = 150
+            suffix = "" if len(states) == 1 else f"_{i}"
+            save(name + suffix, Image.fromarray(arr, "RGBA"))
+    th = Image.fromarray(key(np.array(img.crop(THRESHOLD))), "RGBA")
+    save("threshold", hq_resize_xy(th, 2 * T - 8, 26))
+    mat = Image.fromarray(key(np.array(img.crop(FRONT_MAT))), "RGBA")
+    save("door_mat", hq_resize(mat, 120 / mat.width))
 
 
 def build_doors(save):

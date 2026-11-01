@@ -27,10 +27,10 @@
   "#.........,,,:::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
   "#........#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
   "#........#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
-  "##########,,,#########################FF####KK##########",
-  "#WWWWWWWWW,,,WWWWWWWWWWWWWWWWWWWWWWWWWFFWWWWKKWWWWWWWWW#",
-  "#WWWWWWWWW,,,WWWWWWWWWWWWWWWWWWWWWWWWWFFWWWWKKWWWWWWWWW#",
-  "#WWWWWWWWW,,,WWWWWWWWWWWWWWWWWWWWWWWWWFFWWWWKKWWWWWWWWW#",
+  "##########,,,########################FFF####KK##########",
+  "#WWWWWWWWW,,,WWWWWWWWWWWWWWWWWWWWWWWWFFFWWWWKKWWWWWWWWW#",
+  "#WWWWWWWWW,,,WWWWWWWWWWWWWWWWWWWWWWWWFFFWWWWKKWWWWWWWWW#",
+  "#WWWWWWWWW,,,WWWWWWWWWWWWWWWWWWWWWWWWFFFWWWWKKWWWWWWWWW#",
   "#______________________________________________________#",
   "#______________________________________________________#",
   "#______________________________________________________#",
@@ -551,12 +551,12 @@
   ],
   [
    "fireplace",
-   41.6,
+   42.1,
    24.4,
    [
-    40.2,
+    40.8,
     24,
-    2.8,
+    2.6,
     0.4
    ],
    false
@@ -729,13 +729,6 @@
    true
   ],
   [
-   "door_mat",
-   34.0,
-   37.0,
-   [],
-   true
-  ],
-  [
    "sofa",
    33.5,
    32.6,
@@ -806,6 +799,34 @@
     0.6
    ],
    false
+  ],
+  [
+   "threshold",
+   11.0,
+   27.6,
+   [],
+   true
+  ],
+  [
+   "threshold",
+   20.0,
+   27.6,
+   [],
+   true
+  ],
+  [
+   "threshold",
+   34.0,
+   37.6,
+   [],
+   true
+  ],
+  [
+   "door_mat",
+   34.0,
+   36.9,
+   [],
+   true
   ]
  ],
  "doors": [
@@ -841,35 +862,18 @@
    "swing": 1
   },
   {
-   "x": 38,
+   "x": 37,
    "y": 20,
    "type": "f",
-   "sprite": "door",
+   "sprite": "double_door",
+   "w": 3,
    "open": true
   },
   {
    "x": 44,
    "y": 20,
    "type": "f",
-   "sprite": "door"
-  },
-  {
-   "x": 10,
-   "y": 27,
-   "type": "h",
-   "swing": 1
-  },
-  {
-   "x": 19,
-   "y": 27,
-   "type": "h",
-   "swing": 1
-  },
-  {
-   "x": 33,
-   "y": 37,
-   "type": "h",
-   "swing": -1
+   "sprite": "glass_door"
   }
  ],
  "labels": [

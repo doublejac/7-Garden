@@ -245,34 +245,39 @@ func _add_door(d: Dictionary) -> void:
 				posts.append(Rect2(Vector2(px, y * TILE), Vector2(16, TILE)))
 			axis = "x"
 			rect = Rect2(Vector2(x * TILE, y * TILE), Vector2(2 * TILE, TILE))
-		"f":   # 정면 문: 문틀은 그대로, 문짝이 경첩(왼쪽) 쪽으로 접히며 열림
-			node.position = Vector2(x + 1, y + 4) * TILE
-			var sprite_name: String = d.get("sprite", "door")
-			if sprite_name == "door":
-				var frame := _sprite("door_frame")
-				frame.offset = Vector2(-frame.texture.get_width() / 2.0, -frame.texture.get_height())
-				node.add_child(frame)
-				leaf = _sprite("door_leaf")
-				var fw := frame.texture.get_width()
-				leaf.position = Vector2(-fw / 2.0 + (fw - leaf.texture.get_width()) / 2.0, 0)
-				leaf.offset = Vector2(0, -leaf.texture.get_height())
-			else:
-				leaf = _sprite(sprite_name)
-				leaf.position = Vector2(-leaf.texture.get_width() / 2.0, 0)
-				leaf.offset = Vector2(0, -leaf.texture.get_height())
-			rect = Rect2(Vector2(x, y + 3) * TILE, Vector2(2 * TILE, TILE))
-			# 닫혀 있을 때는 문 위 벽 윗면도 덮어서 벽이 이어져 보이게 (열리면 통로가 드러남)
+		"f":   # 정면 문: 닫힘 → 반쯤 열림 → 열림 세 장을 바꿔 보여 줌. 그림 위쪽에 벽(몰딩·회벽)까지 포함
+			var dw: int = d.get("w", 2)   # 문 자리 폭(칸)
+			node.position = Vector2(x + dw / 2.0, y + 4) * TILE
+			var base: String = d.get("sprite", "glass_door")
+			var frames: Array[Texture2D] = []
+			for i in 3:
+				var path := PROP_DIR + "%s_%d.png" % [base, i]
+				if ResourceLoader.exists(path):
+					frames.append(load(path))
+			if frames.is_empty():
+				frames.append(load(PROP_DIR + base + ".png"))
+			leaf = Sprite2D.new()
+			leaf.texture = frames[0]
+			leaf.centered = false
+			leaf.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			leaf.scale.x = dw * TILE / float(frames[0].get_width())   # 문 자리 폭에 꼭 맞게
+			leaf.position = Vector2(-dw * TILE / 2.0, -3 * TILE)   # 그림 위 끝 = 벽 앞면 위 끝
+			leaf.set_meta("frames", frames)
+			rect = Rect2(Vector2(x, y + 3) * TILE, Vector2(dw * TILE, TILE))
+			# 문 위 벽 윗면 (언제나): 열린 문으로 지나갈 때도 문 위 벽이 이어져 보이게
 			var atlas: Texture2D = load(ATLAS)
-			for i in 2:
+			var lintels := Node2D.new()
+			for i in dw:
 				var lintel := Sprite2D.new()
 				lintel.texture = atlas
 				lintel.region_enabled = true
 				var c := WALL_AUTO + Vector2i(11 % 4, 11 / 4)   # 위·왼쪽·오른쪽이 벽인 윗면
 				lintel.region_rect = Rect2(Vector2(c) * TILE, Vector2(TILE, TILE))
 				lintel.centered = false
-				lintel.position = Vector2(i - 1, -4) * TILE
+				lintel.position = Vector2(i * TILE - dw * TILE / 2.0, -4 * TILE)
 				lintel.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-				closed.add_child(lintel)
+				lintels.add_child(lintel)
+			node.add_child(lintels)
 	node.add_child(closed)
 	node.add_child(leaf)
 	# 문틀 기둥: 그림은 벽 윗면 테두리가 대신하고, 충돌만 언제나 막음 (모서리로 빠져나가지 않게)
@@ -298,29 +303,38 @@ func _set_door(door: Dictionary, open: bool, animate := true) -> void:
 	door["open"] = open
 	var leaf: Sprite2D = door["leaf"]
 	var type: String = door["type"]
-	var prop := "scale:x" if door["axis"] == "x" else "scale:y"
-	# 정면 문: 문짝이 경첩 쪽으로 접힘(폭 1 → 0). 옆·가로 문: 문짝이 경첩 쪽으로 접히며 흐려짐
-	var target := 0.0 if open else 1.0
-	var alpha := 1.0
-	if type != "f":
-		target = 0.25 if open else 1.0
-		alpha = 0.0 if open else 1.0
 	if door["tween"]:
 		(door["tween"] as Tween).kill()
-	if animate:
-		var tw := create_tween().set_parallel(true)
-		tw.tween_property(leaf, prop, target, 0.2).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(leaf, "modulate:a", alpha, 0.2)
-		if type == "f":
-			if open:
-				tw.chain().tween_callback(func(): door["closed"].visible = false)
-			else:
-				door["closed"].visible = true
-		door["tween"] = tw
+	if type == "f":
+		# 정면 문: 그림 세 장(닫힘·반쯤·열림)을 차례로
+		var frames: Array = leaf.get_meta("frames")
+		var last := frames.size() - 1
+		if last == 0:
+			pass
+		elif animate:
+			var order := [0, 1, last] if open else [last, 1, 0]
+			var tw := create_tween()
+			for i in order.size():
+				var tex: Texture2D = frames[order[i]]
+				tw.tween_callback(func(): leaf.texture = tex)
+				if i < order.size() - 1:
+					tw.tween_interval(0.08)
+			door["tween"] = tw
+		else:
+			leaf.texture = frames[last if open else 0]
 	else:
-		leaf.set_indexed(NodePath(prop), target)
-		leaf.modulate.a = alpha
-		door["closed"].visible = not open
+		# 옆·가로 문: 문짝이 경첩 쪽으로 접히며 흐려짐
+		var prop := "scale:x" if door["axis"] == "x" else "scale:y"
+		var target := 0.25 if open else 1.0
+		var alpha := 0.0 if open else 1.0
+		if animate:
+			var tw := create_tween().set_parallel(true)
+			tw.tween_property(leaf, prop, target, 0.2).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(leaf, "modulate:a", alpha, 0.2)
+			door["tween"] = tw
+		else:
+			leaf.set_indexed(NodePath(prop), target)
+			leaf.modulate.a = alpha
 	(door["body"].get_child(0) as CollisionShape2D).set_deferred("disabled", open)
 	if door["leaf_body"].get_child_count() > 0:
 		(door["leaf_body"].get_child(0) as CollisionShape2D).set_deferred("disabled", not open)

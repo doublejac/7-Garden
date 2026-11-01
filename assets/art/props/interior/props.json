@@ -95,17 +95,9 @@
     193,
     184
   ],
-  "steel_door": [
-    121,
-    184
-  ],
   "umbrella_stand": [
     52,
     93
-  ],
-  "door_mat": [
-    128,
-    57
   ],
   "sofa": [
     200,
@@ -242,5 +234,53 @@
   "door_post": [
     24,
     16
+  ],
+  "room_door_0": [
+    108,
+    192
+  ],
+  "room_door_1": [
+    108,
+    204
+  ],
+  "room_door_2": [
+    108,
+    192
+  ],
+  "glass_door_0": [
+    108,
+    191
+  ],
+  "glass_door_1": [
+    108,
+    203
+  ],
+  "glass_door_2": [
+    108,
+    191
+  ],
+  "steel_door": [
+    112,
+    191
+  ],
+  "double_door_0": [
+    178,
+    189
+  ],
+  "double_door_1": [
+    178,
+    189
+  ],
+  "double_door_2": [
+    178,
+    190
+  ],
+  "threshold": [
+    120,
+    26
+  ],
+  "door_mat": [
+    120,
+    77
   ]
 }
