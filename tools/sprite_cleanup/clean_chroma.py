@@ -314,13 +314,19 @@ def steady_head(path, n, cw, ch, opt):
             al = a[..., 3] > 128
             r, g, b = a[..., 0].astype(int), a[..., 1].astype(int), a[..., 2].astype(int)
             white = al & (r > 215) & (g > 215) & (b > 215)
-            hem = np.nonzero(white.sum(1) >= 6)[0].max() - 3          # 원피스 밑단 조금 위부터 (원피스는 좌우 대칭이라 같이 뒤집어도 됨)
+            hem = np.nonzero(white.sum(1) >= 6)[0].max() - 1          # 원피스 밑단 조금 위부터 (원피스는 좌우 대칭이라 같이 뒤집어도 됨)
             legs = a[hem:].copy()
             xs = np.nonzero((legs[..., 3] > 128).any(0))[0]
             x0, x1 = xs[0], xs[-1] + 1
             a[hem:, x0:x1] = legs[:, x0:x1][:, ::-1]
             fs[i] = Image.fromarray(a, "RGBA")
 
+    if opt.get("head") is False:     # 머리는 그림 그대로 두고 다리 교대만
+        out = Image.new("RGBA", sheet.size, (0, 0, 0, 0))
+        for i, f in enumerate(fs):
+            out.alpha_composite(f, (i * cw, 0))
+        out.save(path)
+        return
     chins = [chin(f) for f in fs]
     head = fs[0].crop((0, 0, cw, max(chins) + 5))
     bob = opt.get("bob", [0] * n)
