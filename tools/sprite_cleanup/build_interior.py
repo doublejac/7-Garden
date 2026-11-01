@@ -258,6 +258,7 @@ FRONT_DOORS = {
     "steel_door": [(1039, 177, 445)],                                           # 철문 (늘 잠김)
     "double_door": [(1545, 98, 523), (1545, 687, 1164), (1545, 1302, 1779)],    # 이중문
 }
+FRAME_TOP = {"room_door": 73, "glass_door": 73, "steel_door": 73, "double_door": 57}   # 칸 위 ~ 문틀 위 (원본 px)
 THRESHOLD = (487, 2107, 843, 2194)
 FRONT_MAT = (1015, 2053, 1370, 2281)
 
@@ -289,6 +290,9 @@ def build_front_doors(save):
                 for j, sz in enumerate(sizes):
                     if sz > 600:   # 넓은 어둠 = 열린 문틈
                         arr[..., 3][lab == j + 1] = 150
+            # 문틀 위쪽 벽(몰딩·회벽)은 잘라 냄: 게임에서는 벽 타일을 그대로 이어 그림
+            ft = round(FRAME_TOP[name] * size[1] / WALL_CELL_H)
+            arr = arr[ft:]
             suffix = "" if len(states) == 1 else f"_{i}"
             save(name + suffix, Image.fromarray(arr, "RGBA"))
     th = Image.fromarray(key(np.array(img.crop(THRESHOLD))), "RGBA")

@@ -277,7 +277,19 @@ func _add_door(d: Dictionary) -> void:
 			leaf.centered = false
 			leaf.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			leaf.scale.x = dw * TILE / float(frames[0].get_width())   # 문 자리 폭에 꼭 맞게
-			leaf.position = Vector2(-dw * TILE / 2.0, -3 * TILE)   # 그림 위 끝 = 벽 앞면 위 끝
+			var fh := frames[0].get_height()   # 닫힌 문 높이 (문틀 위 ~ 바닥)
+			leaf.position = Vector2(-dw * TILE / 2.0, -fh)
+			# 문틀 위쪽은 옆 벽과 같은 벽 앞면 타일을 이어 그림 (몰딩·판벽 선이 옆 벽과 맞게)
+			var atlas_face: Texture2D = load(ATLAS)
+			for i in dw:
+				var top_wall := Sprite2D.new()
+				top_wall.texture = atlas_face
+				top_wall.region_enabled = true
+				top_wall.region_rect = Rect2(Vector2(WALL_FACE.x + (x + i) % 2, WALL_FACE.y) * TILE, Vector2(TILE, 3 * TILE - fh))
+				top_wall.centered = false
+				top_wall.position = Vector2(i * TILE - dw * TILE / 2.0, -3 * TILE)
+				top_wall.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+				node.add_child(top_wall)
 			leaf.set_meta("frames", frames)
 			rect = Rect2(Vector2(x, y + 3) * TILE, Vector2(dw * TILE, TILE))
 			# 문 위 벽 윗면 (언제나): 열린 문으로 지나갈 때도 문 위 벽이 이어져 보이게
