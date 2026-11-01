@@ -2,7 +2,8 @@
   "sheets": {
     "base": "src/v3/seoha_base.jpg",
     "story1": "src/v3/seoha_story1.jpg",
-    "walk8": "src/v3/seoha_walk8.jpg"
+    "walk8": "src/v3/seoha_walk8.jpg",
+    "walkd3": "src/v3/seoha_walk_down3.jpg"
   },
   "reference": {
     "animation": "idle",
@@ -138,65 +139,46 @@
     },
     {
       "name": "walk_down",
-      "fps": 10,
+      "fps": 6,
       "pin": 1,
       "normalize": "head",
       "frames": [
         [
-          "walk8",
+          "walkd3",
           0,
           0
         ],
         [
-          "walk8",
+          "walkd3",
           0,
           1
         ],
         [
-          "walk8",
+          "walkd3",
           0,
           2
         ],
         [
-          "walk8",
+          "walkd3",
+          0,
+          0
+        ],
+        [
+          "walkd3",
+          0,
+          1
+        ],
+        [
+          "walkd3",
           0,
           2
-        ],
-        [
-          "walk8",
-          0,
-          4
-        ],
-        [
-          "walk8",
-          0,
-          5
-        ],
-        [
-          "walk8",
-          0,
-          6
-        ],
-        [
-          "walk8",
-          0,
-          6
         ]
       ],
       "head_ref": "idle",
-      "head_metric": "both",
+      "head_metric": "stature",
       "steady_head": {
-        "bob": [
-          0,
-          2,
-          1,
-          0,
-          0,
-          2,
-          1,
-          0
-        ],
-        "alt_legs": true
+        "alt_legs": true,
+        "head": false
       }
     },
     {
