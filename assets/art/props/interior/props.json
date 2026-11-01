@@ -219,20 +219,28 @@
     133,
     184
   ],
-  "side_door_closed": [
-    12,
-    128
+  "door_frame": [
+    111,
+    184
   ],
-  "side_door_open": [
+  "door_leaf": [
+    87,
+    171
+  ],
+  "side_leaf": [
     112,
-    128
+    163
   ],
-  "side_door_closed_h": [
-    128,
-    12
+  "door_plank_v": [
+    16,
+    104
   ],
-  "side_door_open_h": [
-    128,
-    112
+  "door_plank_h": [
+    104,
+    16
+  ],
+  "door_post": [
+    16,
+    14
   ]
 }

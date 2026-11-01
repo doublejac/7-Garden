@@ -108,8 +108,7 @@ PROPS2 = {
     "tape_box": ("haemu_props_rooms.jpg", (415, 1655, 626, 1838), ("w", 54)),
     "suitcase_open": ("haemu_props_rooms.jpg", (692, 1573, 983, 1884), ("w", 88)),
 }
-LEGACY = ["mirror", "sink", "desk", "door_b",
-          "side_door_closed", "side_door_open", "side_door_closed_h", "side_door_open_h"]
+LEGACY = ["mirror", "sink", "desk", "door_b"]
 
 
 def key(rgb):
@@ -246,7 +245,52 @@ def build_props():
         save(name, hq_resize(im, px / (im.width if axis == "w" else im.height)))
     for name in LEGACY:
         save(name, fogify(Image.open(SRC / "legacy_props" / f"{name}.png").convert("RGBA")))
+    build_doors(save)
     (OUT_PROPS / "props.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+
+def build_doors(save):
+    """문 부품을 정면 나무 문 그림 하나에서 만든다 (색과 그림체가 모든 문에서 같도록).
+    door_frame / door_leaf : 정면 문의 문틀과 문짝 (열면 문짝이 경첩 쪽으로 접히는 애니메이션)
+    side_leaf              : 옆벽 문을 열었을 때 방 안에 세워진 문짝 (3/4 시점에서는 문짝 앞면이 보임)
+    door_plank_v/_h        : 옆벽·가로벽 문을 위에서 본 문짝 두께 (닫힌 문, 가로벽 문이 열렸을 때)
+    door_post              : 문틀 기둥 윗면"""
+    door = Image.open(OUT_PROPS / "door.png").convert("RGBA")
+    a = np.array(door)
+    lum = a[..., :3].astype(int).sum(2)
+    mid = a.shape[0] // 2
+    dark = np.nonzero((lum[mid] < 120) & (a[mid, :, 3] > 100))[0]
+    x0, x1 = int(dark[dark < a.shape[1] // 2].max()) + 1, int(dark[dark > a.shape[1] // 2].min())
+    col = a[:, a.shape[1] // 2 + 6]
+    dark_y = np.nonzero((col[..., :3].astype(int).sum(1) < 140) & (col[..., 3] > 100))[0]
+    y0 = int(dark_y[(dark_y > 4) & (dark_y < 30)].min()) + 1
+    leaf = door.crop((x0, y0, x1, door.height))
+    frame = door.copy()
+    frame.paste((0, 0, 0, 0), (x0, y0, x1, door.height))
+    save("door_frame", frame)
+    save("door_leaf", leaf)
+    save("side_leaf", leaf.resize((112, leaf.height - 8), Image.LANCZOS))
+    # 위에서 본 문짝: 문짝 색 판 + 어두운 테두리 + 양쪽 손잡이
+    wood = tuple(int(v) for v in np.median(np.array(leaf)[20:60, 20:60].reshape(-1, 4), 0))
+    edge = tuple(int(v) for v in np.percentile(np.array(leaf)[..., :4].reshape(-1, 4), 5, axis=0))
+    knob = (196, 182, 150, 255)
+
+    def plank(length, thick=10):
+        im = Image.new("RGBA", (thick + 6, length), (0, 0, 0, 0))
+        im.paste(edge[:3] + (255,), (3, 0, 3 + thick, length))
+        im.paste(wood[:3] + (255,), (4, 1, 3 + thick - 1, length - 1))
+        im.paste(tuple(min(255, c + 22) for c in wood[:3]) + (255,), (5, 2, 7, length - 2))   # 윗면 빛
+        k = length // 2
+        im.paste(knob, (0, k - 2, 3, k + 2))
+        im.paste(knob, (3 + thick, k - 2, thick + 6, k + 2))
+        return im
+
+    pv = plank(104)
+    save("door_plank_v", pv)
+    save("door_plank_h", pv.transpose(Image.ROTATE_90))
+    post = Image.new("RGBA", (16, 14), edge[:3] + (255,))
+    post.paste(tuple(min(255, c + 18) for c in wood[:3]) + (255,), (1, 1, 15, 13))
+    save("door_post", post)
 
 
 if __name__ == "__main__":
