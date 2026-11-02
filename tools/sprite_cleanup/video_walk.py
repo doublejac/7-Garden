@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent))
-from clean_chroma import head_width, hq_resize, hq_resize_xy, key_green, stature  # noqa: E402
+from clean_chroma import chin_rows, head_width, hq_resize, hq_resize_xy, key_green, stature  # noqa: E402
 
 
 def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None):
@@ -63,6 +63,33 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
         cell.alpha_composite(f, (dx, dy)) if dx >= 0 and dy >= 0 else cell.paste(f, (dx, dy), f)
         cells.append(cell)
         sheet.alpha_composite(cell, (i * cw, 0))
+    # 머리는 정지 그림으로: 영상은 머리를 작게, 몸을 길게 다시 그려서 정지와 번갈아 나오면 머리 크기가 튐.
+    # 칸마다 영상의 턱 아래 몸을 정지 그림의 몸 길이에 맞춰 늘이고, 그 위에 정지 그림의 머리를 붙임 (영상의 오르내림은 유지)
+    _, s_chin, _ = chin_rows(stand)
+    t0 = None
+    sheet = Image.new("RGBA", (cw * count, ch), (0, 0, 0, 0))
+    fixed = []
+    for i, cell in enumerate(cells):
+        top, v_chin, v_bot = chin_rows(cell)
+        t0 = top if t0 is None else t0
+        dy = int(top - t0)                                   # 영상의 몸 오르내림
+        body = cell.crop((0, v_chin, cw, v_bot + 1))
+        bh = s_bot + 1 - (s_chin + dy)
+        # 폭은 상체(카디건)만으로 잼: 다리가 벌어진 칸에서 몸이 홀쭉해지지 않게
+        bb = np.array(body)
+        bx = np.nonzero((bb[: int(bb.shape[0] * 0.55), :, 3] > 128).any(0))[0]
+        sx = np.nonzero((sa[s_chin + 2:s_chin + 2 + int((s_bot - s_chin) * 0.55), :, 3] > 128).any(0))[0]
+        kx = (sx[-1] - sx[0] + 1) / (bx[-1] - bx[0] + 1)      # 몸 폭도 정지 그림에 맞춤
+        body = hq_resize_xy(body, max(1, round(cw * kx)), bh)
+        bxs = np.nonzero((np.array(body)[: int(bh * 0.55), :, 3] > 128).any(0))[0]
+        ox = int(round((sx[0] + sx[-1]) / 2 - (bxs[0] + bxs[-1]) / 2))
+        out_c = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
+        out_c.alpha_composite(body, (max(0, ox), s_chin + dy)) if ox >= 0 else out_c.paste(body, (ox, s_chin + dy), body)
+        head = stand.crop((0, 0, cw, s_chin + 3))
+        out_c.alpha_composite(head, (0, dy)) if dy >= 0 else out_c.paste(head, (0, dy), head)
+        fixed.append(out_c)
+        sheet.alpha_composite(out_c, (i * cw, 0))
+    cells = fixed
     sheet.save(out / f"{name}.png")
     meta["animations"][name] = {"frames": count, "cell": [cw, ch], "fps": fps, "loop": True}
     if mirror_as:
