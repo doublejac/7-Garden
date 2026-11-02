@@ -87,10 +87,11 @@ def maker(F, start, head_fix):
 
     def make(i):
         c = keyed(F, i)
-        bot = c.getbbox()[3]
+        top, bot = c.getbbox()[1], c.getbbox()[3]
+        ch_i = top + (chin - y0)   # 걸을 때 머리가 오르내려도 턱 위치를 따라감 (고정하면 입이 아래쪽 비율로 눌림)
         W = round(c.width * s)
-        up = hq_resize_xy(c.crop((0, 0, c.width, chin)), W, round(chin * s))
-        lo = hq_resize_xy(c.crop((0, chin, c.width, bot)), W, round((bot - chin) * s * lo_k))
+        up = hq_resize_xy(c.crop((0, 0, c.width, ch_i)), W, round(ch_i * s))
+        lo = hq_resize_xy(c.crop((0, ch_i, c.width, bot)), W, round((bot - ch_i) * s * lo_k))
         o = Image.new("RGBA", (W, up.height + lo.height))
         o.alpha_composite(up)
         o.alpha_composite(lo, (0, up.height))
