@@ -379,11 +379,18 @@ func _set_door(door: Dictionary, open: bool, animate := true) -> void:
 
 
 ## 발 상자(feet)와 가까운 문을 열고 닫는다. 잠긴 문이면 "locked", 아무 문도 없으면 ""
+## 문 여닫기. 범위는 넉넉하게(문 가운데에서 2.4칸). 닫을 때 몸이 문 자리에 살짝 걸쳐 있으면
+## 밀어낼 거리를 door_push에 담아 돌려줌 (부르는 쪽에서 인물을 그만큼 옮김). 문 자리 한가운데면 닫지 않음
+var door_push := Vector2.ZERO
+
 func toggle_door_near(feet: Rect2) -> String:
+	door_push = Vector2.ZERO
 	var best: Dictionary = {}
-	var best_d := 1.8 * TILE
+	var best_d := 2.4 * TILE
 	for door in doors:
-		var dist: float = (door["center"] as Vector2).distance_to(feet.get_center())
+		var r: Rect2 = door["rect"]
+		var dist: float = r.get_center().distance_to(feet.get_center())
+		dist = minf(dist, _rect_gap(r, feet) + TILE * 0.5)   # 긴 문(2칸)은 가장자리까지 거리도 봄
 		if dist < best_d:
 			best_d = dist
 			best = door
@@ -392,11 +399,35 @@ func toggle_door_near(feet: Rect2) -> String:
 	if best["locked"]:
 		return "locked"
 	if best["open"] and feet.intersects(best["rect"]):
-		return "blocked"   # 문 자리에 서 있으면 닫지 않음 (갇힘 방지)
+		var push := _push_out(best["rect"], feet, best["type"])
+		if push == Vector2.ZERO:
+			return "blocked"   # 문 자리 한가운데에 서 있으면 닫지 않음 (갇힘 방지)
+		door_push = push
 	if not best["open"] and (best["leaf_rect"] as Rect2).has_area() and feet.intersects(best["leaf_rect"]):
 		return "blocked"   # 문짝이 펼쳐질 자리에 서 있으면 열지 않음
 	_set_door(best, not best["open"])
 	return "opened" if best["open"] else "closed"
+
+
+func _rect_gap(a: Rect2, b: Rect2) -> float:
+	var dx := maxf(0.0, maxf(a.position.x - b.end.x, b.position.x - a.end.x))
+	var dy := maxf(0.0, maxf(a.position.y - b.end.y, b.position.y - a.end.y))
+	return Vector2(dx, dy).length()
+
+
+## 문 자리(rect)에 걸친 발을 문을 가로지르는 방향으로 가까운 쪽으로 빼낼 거리.
+## 36px 넘게 밀어야 하면(문 자리 한가운데) ZERO → 닫지 않음
+func _push_out(r: Rect2, feet: Rect2, type: String) -> Vector2:
+	var p: Vector2
+	if type == "v":
+		var left := r.position.x - feet.end.x - 1
+		var right := r.end.x - feet.position.x + 1
+		p = Vector2(left if absf(left) < absf(right) else right, 0)
+	else:
+		var up := r.position.y - feet.end.y - 1
+		var down := r.end.y - feet.position.y + 1
+		p = Vector2(0, up if absf(up) < absf(down) else down)
+	return p if p.length() <= 36.0 else Vector2.ZERO
 
 
 func _make_light(pos: Vector2, size_scale: float) -> PointLight2D:
@@ -503,6 +534,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_info()
 		KEY_E:
 			var r := toggle_door_near(feet_rect())
+			if door_push != Vector2.ZERO:
+				player.move_and_collide(door_push)
 			if r == "locked":
 				_update_info("잠겨 있다.")
 		KEY_V:
