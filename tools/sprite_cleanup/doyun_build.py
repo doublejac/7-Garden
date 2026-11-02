@@ -34,13 +34,14 @@ TOTAL = 178                # 정지 키
 
 # 걷기 재생 속도. 맵 이동 속도(150px/s)에 비해 발이 바닥을 미는 속도가 서하와 비슷하게:
 # 옆 보폭 약 53px·한 바퀴 두 걸음 → 8fps면 1.5초에 두 걸음. 정면·뒤는 서하와 같은 2초에 두 걸음
-FPS = {"walk_right": 8, "walk_down": 6, "walk_up": 6}
 
 # 이름, 영상, 시작, 주기(프레임), 칸 수, 머리 폭 보정, 좌우반전 이름, 정지 이름, 반전 정지, 깜빡임("frame:N" / "draw" / None)
+# 걷기는 "작은 보폭" 영상(*_small.mp4, 서하처럼 1초에 두 걸음쯤), 정지는 처음 영상의 첫 장면(눈 뜬 정지 그림)과 깜빡임.
+# 두 영상 모두 같은 정지 그림에서 시작해서 축척·위치가 그대로 맞음. 재생 속도는 영상 속 걸음 빠르기 그대로
 CLIPS = [
-    ("walk_right", "walk_right.mp4", 92, 56, 12, 762 / 717, "walk_left", "idle_right", "idle_left", "frame:12"),
-    ("walk_down", "walk_down.mp4", 45, 54, 12, 1.0, None, "idle", None, "draw"),
-    ("walk_up", "walk_up.mp4", 25, 53, 12, 722 / 717, None, "idle_up", None, None),
+    ("walk_right", "walk_right_small.mp4", 43, 26, 10, 762 / 717, "walk_left", "idle_right", "idle_left", "frame:12", "walk_right.mp4"),
+    ("walk_down", "walk_down_small.mp4", 36, 32, 10, 1.0, None, "idle", None, "draw", "walk_down.mp4"),
+    ("walk_up", "walk_up_small.mp4", 116, 24, 8, 722 / 717, None, "idle_up", None, None, "walk_up.mp4"),
 ]
 
 
@@ -178,12 +179,14 @@ def sheet(cells, name, meta, fps, flip=False):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     meta = {"cell": [CW, CH], "animations": {}}
-    for name, video, start, period, count, head_fix, mirror, idle, idle_mirror, bl in CLIPS:
+    for name, video, start, period, count, head_fix, mirror, idle, idle_mirror, bl, idle_video in CLIPS:
         F = read_video(SRC / video)
         make = maker(F, start, head_fix)
         cells = [make(start + round(j * period / count)) for j in range(count)]
-        # 영상 속도 그대로(5fps)면 걸음이 느려 맵 위를 미끄러지듯 보임 → 서하와 같은 걸음 빠르기로
-        fps = FPS[name]
+        fps = round(count / (period / 24))
+        del F
+        F = read_video(SRC / idle_video)
+        make = maker(F, 0, head_fix)
         sheet(cells, name, meta, fps)
         if mirror:
             sheet(cells, mirror, meta, fps, flip=True)

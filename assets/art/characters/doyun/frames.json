@@ -5,21 +5,21 @@
   ],
   "animations": {
     "walk_right": {
-      "frames": 12,
+      "frames": 10,
       "cell": [
         124,
         192
       ],
-      "fps": 8,
+      "fps": 9,
       "loop": true
     },
     "walk_left": {
-      "frames": 12,
+      "frames": 10,
       "cell": [
         124,
         192
       ],
-      "fps": 8,
+      "fps": 9,
       "loop": true
     },
     "idle_right": {
@@ -41,12 +41,12 @@
       "loop": true
     },
     "walk_down": {
-      "frames": 12,
+      "frames": 10,
       "cell": [
         124,
         192
       ],
-      "fps": 6,
+      "fps": 8,
       "loop": true
     },
     "idle": {
@@ -59,12 +59,12 @@
       "loop": true
     },
     "walk_up": {
-      "frames": 12,
+      "frames": 8,
       "cell": [
         124,
         192
       ],
-      "fps": 6,
+      "fps": 8,
       "loop": true
     },
     "idle_up": {
