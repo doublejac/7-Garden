@@ -303,7 +303,8 @@ def main(cfg_path, out_dir):
         compose(out, cw_opt["name"], cw_opt["idle"], str(Path(cfg_path).parent / cw_opt.get("legs", "")), cw_opt.get("fps", 6),
                 cw_opt.get("body", False), cw_opt.get("hands", 0), cw_opt.get("lift", 0),
                 cw_opt.get("side", False), cw_opt.get("mirror_as"),
-                str(Path(cfg_path).parent / cw_opt["mid"]) if cw_opt.get("mid") else None)
+                str(Path(cfg_path).parent / cw_opt["mid"]) if cw_opt.get("mid") else None,
+                [str(Path(cfg_path).parent / p) for p in cw_opt.get("poses", [])] or None, cw_opt.get("bobs"))
 
 
 def breathe(path, n, cw, ch, idx):

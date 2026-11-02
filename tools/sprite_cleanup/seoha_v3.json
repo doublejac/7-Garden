@@ -513,11 +513,21 @@
       "name": "walk_right",
       "idle": "idle_right",
       "legs": "src/v3/seoha_legs_right_step.jpg",
-      "fps": 6,
+      "fps": 10,
       "hands": 0,
       "side": true,
       "mirror_as": "walk_left",
-      "mid": "src/v3/seoha_legs_right_pass.jpg"
+      "poses": [
+        "src/v3/seoha_legs_right_down.jpg",
+        "src/v3/seoha_legs_right_pass.jpg",
+        "src/v3/seoha_legs_right_push.jpg"
+      ],
+      "bobs": [
+        0,
+        1,
+        0,
+        -1
+      ]
     }
   ]
 }

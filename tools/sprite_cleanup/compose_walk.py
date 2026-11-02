@@ -133,6 +133,8 @@ def swing_hand_side(img, sa, s_hem, dx):
 
 def bob(img, s_hem, dy):
     """원피스 밑단 위(머리·몸)만 dy px 내림/올림. 다리는 바닥에 그대로."""
+    if dy == 0:
+        return img
     a = np.array(img).copy()
     top = a[:s_hem + 1].copy()
     a[:s_hem + 1] = 0
@@ -199,7 +201,7 @@ def finish(out, meta, name, frames, cw, ch, fps, mirror_as, msg):
     print(msg)
 
 
-def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0, side=False, mirror_as=None, mid_src=None):
+def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0, side=False, mirror_as=None, mid_src=None, poses=None, bobs=None):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -319,6 +321,23 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0,
                 step[y][xs[ok]] = tgt
         top_cut = chin
 
+    if side and poses:
+        # 반 걸음 여러 자세(편집 그림들)를 합성 + 다리 밝기를 맞바꾼 반대 반 걸음 → 2배 칸 수
+        half = []
+        for i, src in enumerate([legs_src] + list(poses)):
+            if i == 0:
+                img = Image.fromarray(step, "RGBA")
+            else:
+                main(out_dir, "_p", idle_name, src, fps, side=True)
+                img = Image.open(out / "_p.png").crop((0, 0, cw, ch))
+                (out / "_p.png").unlink()
+                meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
+                meta["animations"].pop("_p", None)
+            half.append(img)
+        bobs = bobs or [0] * len(half)
+        frames = [bob(f, s_hem, d) for f, d in zip(half, bobs)]
+        frames += [bob(swap_leg_shade(f, s_hem), s_hem, d) for f, d in zip(half, bobs)]
+        return finish(out, meta, name, frames, cw, ch, fps, mirror_as, f"{name}: {len(frames)}칸 (옆모습, 자세 {len(half)}개 × 2)")
     if side:
         a1 = swing_hand_side(step, sa, s_hem, hands) if hands else step
         a2 = swing_hand_side(step, sa, s_hem, -hands) if hands else step
