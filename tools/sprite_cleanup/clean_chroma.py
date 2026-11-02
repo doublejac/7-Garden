@@ -297,6 +297,11 @@ def main(cfg_path, out_dir):
                     steady_head(out / f"{nm}.png", len(fr), cell_w, cell_h, anim["steady_head"])
     (out / "frames.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"칸 크기 {cell_w}x{cell_h}, 동작 {len(meta['animations'])}개")
+    # 영상으로 만든 걷기 (Google Flow 등). video_walk.py 참고
+    for v in cfg.get("video_walks", []):
+        from video_walk import main as video_walk
+        video_walk(out, v["name"], v["idle"], str(Path(cfg_path).parent / v["video"]), v["start"], v["period"],
+                   v["count"], v.get("fps", 8), v.get("mirror_as"))
     # 다리 합성 걷기 (정지 그림 + 다리 편집 그림). compose_walk.py 참고
     for cw_opt in cfg.get("compose_walks", []):
         from compose_walk import main as compose
