@@ -144,6 +144,44 @@ def bob(img, s_hem, dy):
     return Image.fromarray(a, "RGBA")
 
 
+def swap_leg_shade(img, s_hem):
+    """옆모습: 밑단 아래 다리 피부의 밝은 다리와 어두운 다리 색을 서로 바꾼다.
+    다리 모양은 그대로인데 앞뒤 다리가 바뀐 그림이 됨 (반대 발 내딛기·반대 다리 지나가기)."""
+    a = np.array(img).copy()
+    reg = a[s_hem + 1:]
+    al = reg[..., 3] > 128
+    r, g, b = (reg[..., i].astype(float) for i in range(3))
+    skin = al & (r > 110) & (r > g + 8) & (g > b - 10)
+    if skin.sum() < 20:
+        return img
+    lum = (r + g + b) / 3
+    # 두 다리를 떨어진 덩어리로 나눔 (피부 + 바로 붙은 외곽선)
+    from scipy import ndimage as ndi
+    lab, n = ndi.label(skin)
+    if n < 2:
+        return img
+    sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
+    i1, i2 = np.argsort(sizes)[-2:] + 1
+    m1, m2 = lab == i1, lab == i2
+    dark, light = (m1, m2) if lum[m1].mean() < lum[m2].mean() else (m2, m1)
+    src = reg[..., :3].copy()
+
+    def remap(mask_from, mask_to):
+        # 밝기 순위가 같은 상대 다리 색으로 (색조 유지)
+        lf = lum[mask_from]
+        cols = src[mask_to]
+        order = np.argsort(lum[mask_to])
+        q = np.argsort(np.argsort(lf)) / max(1, len(lf) - 1)
+        idx = order[np.clip((q * (len(order) - 1)).round().astype(int), 0, len(order) - 1)]
+        return cols[idx]
+
+    nd, nl = remap(dark, light), remap(light, dark)
+    reg[..., :3][dark] = nd
+    reg[..., :3][light] = nl
+    a[s_hem + 1:] = reg
+    return Image.fromarray(a, "RGBA")
+
+
 def finish(out, meta, name, frames, cw, ch, fps, mirror_as, msg):
     sheet = Image.new("RGBA", (cw * len(frames), ch), (0, 0, 0, 0))
     for i, f in enumerate(frames):
@@ -293,9 +331,11 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0,
             meta["animations"].pop("_mid", None)
         # 몸 오르내림: 내딛기(체중이 실림)에서 1px 내려앉고, 중간 자세(다리를 모음)에서 1px 올라감
         f1 = bob(Image.fromarray(a1, "RGBA"), s_hem, 1)
-        f2 = bob(Image.fromarray(a2, "RGBA"), s_hem, 1)
         fm = bob(mid, s_hem, -1)
-        frames = [f1, fm, f2, fm]
+        # 반대 발: 다리 밝기를 서로 바꿔 앞뒤 다리가 바뀐 것처럼
+        f2 = bob(swap_leg_shade(Image.fromarray(a2, "RGBA"), s_hem), s_hem, 1)
+        fm2 = bob(swap_leg_shade(mid, s_hem), s_hem, -1)
+        frames = [f1, fm, f2, fm2]
         return finish(out, meta, name, frames, cw, ch, fps, mirror_as, f"{name}: 4칸 (옆모습, 다리 배율 x{k2:.2f})")
     if hands:
         # 팔 흔들림: 정지 그림의 손만 옮김 (화면 오른쪽 손 = 앞으로 → 아래로, 왼쪽 손 = 뒤로 → 소매 속으로 위로)
