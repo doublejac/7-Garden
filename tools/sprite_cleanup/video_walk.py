@@ -17,6 +17,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 from clean_chroma import chin_rows, head_width, hq_resize, hq_resize_xy, key_green, stature  # noqa: E402
 
 
+def hem_row(a):
+    al = a[..., 3] > 128
+    white = al & (a[..., 0] > 215) & (a[..., 1] > 215) & (a[..., 2] > 215)
+    return int(np.nonzero(white.sum(1) >= 3)[0].max())
+
+
 def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
@@ -85,8 +91,18 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
         ox = int(round((sx[0] + sx[-1]) / 2 - (bxs[0] + bxs[-1]) / 2))
         out_c = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
         out_c.alpha_composite(body, (max(0, ox), s_chin + dy)) if ox >= 0 else out_c.paste(body, (ox, s_chin + dy), body)
-        head = stand.crop((0, 0, cw, s_chin + 3))
-        out_c.alpha_composite(head, (0, dy)) if dy >= 0 else out_c.paste(head, (0, dy), head)
+        # 정지 그림을 목 아래 가슴까지(겨드랑이 높이) 덮고, 그 아래 몇 줄은 섞어서 이음매를 숨김
+        s_hem2 = hem_row(sa)
+        cut = s_chin + int((s_hem2 - s_chin) * 0.45)
+        blend = 5
+        top_part = np.array(stand.crop((0, 0, cw, cut + blend))).astype(float)
+        for r in range(blend):
+            top_part[cut + r, :, 3] *= 1 - (r + 1) / (blend + 1)
+        top_img = Image.fromarray(top_part.clip(0, 255).astype(np.uint8), "RGBA")
+        oc = np.array(out_c)
+        oc[max(0, dy):cut + dy] = 0                              # 영상의 목·가슴은 지움
+        out_c = Image.fromarray(oc, "RGBA")
+        out_c.alpha_composite(top_img, (0, dy)) if dy >= 0 else out_c.paste(top_img, (0, dy), top_img)
         fixed.append(out_c)
         sheet.alpha_composite(out_c, (i * cw, 0))
     cells = fixed
