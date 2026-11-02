@@ -534,7 +534,8 @@
       "count": 12,
       "fps": 6,
       "idle_as": "idle_up",
-      "proportion": false
+      "proportion": false,
+      "width_like": "idle"
     }
   ]
 }

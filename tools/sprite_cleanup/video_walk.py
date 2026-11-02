@@ -112,7 +112,7 @@ def write_idle(out, meta, name, mirror, cell, cw, ch):
         meta["animations"][nm] = {"frames": len(seq), "cell": [cw, ch], "fps": 3, "loop": True}
 
 
-def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None, idle_as=None, idle_mirror=None, proportion=True):
+def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None, idle_as=None, idle_mirror=None, proportion=True, width_like=None):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -140,7 +140,10 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
     r0 = raw[0].crop(raw[0].getbbox())
     k = target / stature(r0)
     # 영상은 원본 그림을 세로 화면(9:16)에 맞추느라 가로로 눌려 있음 → 머리 폭/키 비율을 정지 그림에 맞춰 가로로 되돌림
-    kx = k * (head_width(stand) / stature(stand)) / (head_width(r0) / stature(r0))
+    ref_w = stand
+    if width_like:   # 머리 폭을 다른 방향(예: 정면) 정지 그림에 맞춤 → 방향을 바꿔도 몸 폭이 같게
+        ref_w = Image.open(out / f"{width_like}.png").convert("RGBA").crop((0, 0, cw, ch))
+    kx = k * (head_width(ref_w) / stature(ref_w)) / (head_width(r0) / stature(r0))
     frames = []
     first_box = raw[0].getbbox()
     for im in raw:
@@ -166,7 +169,7 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
     c_top, c_chin, c_bot = chin_rows(cells[0])
     ku = (s_chin - s_top) / (c_chin - c_top)
     kl = (s_bot - s_chin) / (c_bot - c_chin)
-    kxx = head_width(stand) / head_width(cells[0])
+    kxx = head_width(ref_w) / head_width(cells[0])
     if not proportion:   # 뒷모습처럼 턱(얼굴)이 안 보이면 비율 맞춤을 하지 않음 (키만 맞춤)
         ku = kl = 1.0
     t0 = c_top

@@ -302,7 +302,7 @@ def main(cfg_path, out_dir):
         from video_walk import main as video_walk
         video_walk(out, v["name"], v["idle"], str(Path(cfg_path).parent / v["video"]), v["start"], v["period"],
                    v["count"], v.get("fps", 8), v.get("mirror_as"), v.get("idle_as"), v.get("idle_mirror"),
-                   v.get("proportion", True))
+                   v.get("proportion", True), v.get("width_like"))
     # 다리 합성 걷기 (정지 그림 + 다리 편집 그림). compose_walk.py 참고
     for cw_opt in cfg.get("compose_walks", []):
         from compose_walk import main as compose
