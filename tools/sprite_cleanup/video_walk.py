@@ -23,7 +23,71 @@ def hem_row(a):
     return int(np.nonzero(white.sum(1) >= 3)[0].max())
 
 
-def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None):
+def blink(img):
+    """눈 감기: 파란 눈동자 둘레를 피부색으로 덮고 아래쪽에 감은 눈 선을 그림."""
+    from scipy import ndimage as ndi
+    a = np.array(img).copy()
+    r, g, b = (a[..., i].astype(int) for i in range(3))
+    blue = (a[..., 3] > 128) & (b > r + 40) & (b > g + 10)
+    lab, n = ndi.label(ndi.binary_dilation(blue, iterations=1))
+    if n == 0:
+        return img
+    sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
+    ys, xs = np.nonzero(lab == np.argmax(sizes) + 1)
+    y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
+    skin = a[min(a.shape[0] - 1, y1 + 3), (x0 + x1) // 2].copy()
+    lash = a[y0 - 1, (x0 + x1) // 2].copy()
+    if lash[:3].astype(int).sum() > 300:   # 위 속눈썹이 안 잡히면 어두운 색
+        lash = np.array([40, 30, 40, 255], np.uint8)
+    # 눈 둘레에서 피부가 아닌 것은 모두 피부색으로 덮되, 바깥까지 이어진 머리카락 덩어리는 남김
+    pad = 8
+    by0, by1, bx0, bx1 = y0 - 3, y1 + 3, x0 - 7, x1 + 3
+    R0, R1, C0, C1 = by0 - pad, by1 + pad, bx0 - pad, bx1 + pad
+    big = a[R0:R1, C0:C1]
+    rr, gg, bb = (big[..., i].astype(int) for i in range(3))
+    is_skin = (rr > 195) & (gg > 145) & (rr - bb > 15)
+    nonskin = (big[..., 3] > 128) & ~is_skin
+    inner = np.zeros(nonskin.shape, bool)
+    inner[pad:-pad, pad:-pad] = True
+    lab, n = ndi.label(nonskin)
+    border = np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))
+    eye_blob = np.isin(lab, np.unique(lab[inner & nonskin])) & ~np.isin(lab, border[border > 0])
+    # 머리카락과 붙어 있는 속눈썹은 덩어리로 안 잡히므로, 상자 안의 어두운 점·흰자·파랑도 덮음
+    lum = (rr + gg + bb) / 3
+    small = inner & nonskin & ((lum < 120) | (bb > rr + 20) | ((lum > 170) & (bb >= rr - 8)))
+    small[:pad + 2] &= lum[:pad + 2] < 110   # 위쪽(앞머리 닿는 줄)은 어두운 속눈썹만
+    big[(eye_blob | small) & inner] = skin
+    # 감은 눈: 아래로 살짝 휜 2px 선 (양 끝이 1px 위)
+    ly = y0 + (y1 - y0) * 2 // 3
+    xa, xb = x0, x1 + 1
+    a[ly:ly + 2, xa + 1:xb - 1] = lash
+    a[ly - 1:ly + 1, xa] = lash
+    a[ly - 1:ly + 1, xb - 1] = lash
+    return Image.fromarray(a, "RGBA")
+
+
+def write_idle(out, meta, name, mirror, cell, cw, ch):
+    """정지 동작 8칸: 기본, 숨쉬기(상체 1px 내려감), 마지막 칸은 눈 깜빡임."""
+    a = np.array(cell)
+    al = a[..., 3] > 128
+    white = al & (a[..., 0] > 215) & (a[..., 1] > 215) & (a[..., 2] > 215)
+    hem = int(np.nonzero(white.sum(1) >= 3)[0].max())
+    br = a.copy()
+    br[1:hem + 1] = a[0:hem]
+    br[0] = 0
+    base, breath = cell, Image.fromarray(br, "RGBA")
+    seq = [base, breath, base, breath, base, breath, base, blink(base)]
+    for nm, flip in ((name, False), (mirror, True)):
+        if not nm:
+            continue
+        sh = Image.new("RGBA", (cw * len(seq), ch), (0, 0, 0, 0))
+        for i, f in enumerate(seq):
+            sh.alpha_composite(f.transpose(Image.FLIP_LEFT_RIGHT) if flip else f, (i * cw, 0))
+        sh.save(out / f"{nm}.png")
+        meta["animations"][nm] = {"frames": len(seq), "cell": [cw, ch], "fps": 3, "loop": True}
+
+
+def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None, idle_as=None, idle_mirror=None):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -37,6 +101,8 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
     with tempfile.TemporaryDirectory() as td:
         subprocess.run(["ffmpeg", "-v", "error", "-i", str(video), f"{td}/f_%04d.png"], check=True)
         picks = [start + round(i * period / count) for i in range(count)]
+        if idle_as:
+            picks.append(0)   # 영상 첫 장면 = 넣은 정지 그림 자세 → 정지 동작도 영상 그림으로 (걷다 멈출 때 그림이 안 바뀌게)
         raw = []
         for p in picks:
             a = np.array(Image.open(f"{td}/f_{p + 1:04d}.png").convert("RGB"))
@@ -77,7 +143,7 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
     kl = (s_bot - s_chin) / (c_bot - c_chin)
     kxx = head_width(stand) / head_width(cells[0])
     t0 = c_top
-    sheet = Image.new("RGBA", (cw * count, ch), (0, 0, 0, 0))
+    sheet = Image.new("RGBA", (cw * len(cells), ch), (0, 0, 0, 0))
     fixed = []
     sx = np.nonzero((sa[s_chin + 2:s_chin + 2 + int((s_bot - s_chin) * 0.55), :, 3] > 128).any(0))[0]
     for i, cell in enumerate(cells):
@@ -97,6 +163,10 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
         fixed.append(out_c)
         sheet.alpha_composite(out_c, (i * cw, 0))
     cells = fixed
+    if idle_as:
+        stand_cell = cells.pop()
+        sheet = sheet.crop((0, 0, cw * count, ch))
+        write_idle(out, meta, idle_as, idle_mirror, stand_cell, cw, ch)
     sheet.save(out / f"{name}.png")
     meta["animations"][name] = {"frames": count, "cell": [cw, ch], "fps": fps, "loop": True}
     if mirror_as:

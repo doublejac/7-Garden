@@ -519,7 +519,9 @@
       "period": 31,
       "count": 10,
       "fps": 8,
-      "mirror_as": "walk_left"
+      "mirror_as": "walk_left",
+      "idle_as": "idle_right",
+      "idle_mirror": "idle_left"
     }
   ]
 }
