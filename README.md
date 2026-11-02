@@ -47,6 +47,15 @@ tests/         test_runner.tscn  자동 점검
 - 애니메이션 리소스 만들기: `godot --headless --path . -s res://tools/build_spriteframes.gd -- seoha`
 - 서하 노드는 텍스처 필터가 Linear입니다. 1배 크기로 쓰는 것을 기준으로 합니다.
 
+### 서하 걷기·정지 (Google Flow 영상)
+- 네 방향 걷기와 정지는 Google Flow로 만든 제자리걷기 영상에서 뽑음: `tools/sprite_cleanup/src/v3/flow/walk_*.mp4`
+- `seoha_v3.json`의 `video_walks` 항목으로 정리 도구가 자동 처리 (`tools/sprite_cleanup/video_walk.py`)
+  - 한 걸음 주기(start, period)에서 count칸을 고르게 뽑음 → 초록 배경 제거 → 키·머리 폭을 맞춤
+  - Flow가 9:16 세로 화면에 맞추며 가로로 눌러 놓은 것을 되돌림, 머리·몸 비율은 턱에서 나눠 맞춤
+  - 정지(`idle_as`)는 영상 첫 장면 + 숨쉬기 + 눈 깜빡임(합성)이라 걷다 멈춰도 그림이 안 바뀜
+  - 뒷모습은 `proportion: false`(턱이 안 보임), `width_like: idle`(폭을 정면에 맞춤)
+- 새 영상 만들 때: Flow의 Frames 방식에 정지 그림(초록 배경)을 첫 프레임으로, "walk in place, camera fixed, demure tiny steps, arms close to body" 조건
+
 ## 맵
 - 실내 맵은 공용 로더 `scripts/map/interior_map.gd`(InteriorMap) + 맵 데이터 `data/maps/<이름>.json` 한 쌍으로 만듭니다.
   JSON 형식(바닥·벽 글자 배열, 가구, 문, 방 이름, 달빛)은 `interior_map.gd` 맨 위 설명 참고.
