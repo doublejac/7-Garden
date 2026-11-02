@@ -40,7 +40,7 @@ TOTAL = 178                # 정지 키
 # 두 영상 모두 같은 정지 그림에서 시작해서 축척·위치가 그대로 맞음. 재생 속도는 영상 속 걸음 빠르기 그대로
 CLIPS = [
     ("walk_right", "walk_right_small.mp4", 43, 26, 10, 762 / 717, "walk_left", "idle_right", "idle_left", "frame:12", "walk_right.mp4"),
-    ("walk_down", "walk_down_small.mp4", 36, 32, 10, 1.0, None, "idle", None, "draw", "walk_down.mp4"),
+    ("walk_down", "walk_down_small.mp4", 62, 44, 11, 1.0, None, "idle", None, "draw", "walk_down.mp4"),
     ("walk_up", "walk_up_small.mp4", 116, 24, 8, 722 / 717, None, "idle_up", None, None, "walk_up.mp4"),
 ]
 

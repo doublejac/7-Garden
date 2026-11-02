@@ -41,12 +41,12 @@
       "loop": true
     },
     "walk_down": {
-      "frames": 10,
+      "frames": 11,
       "cell": [
         124,
         192
       ],
-      "fps": 8,
+      "fps": 6,
       "loop": true
     },
     "idle": {
