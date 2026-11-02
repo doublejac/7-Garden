@@ -521,7 +521,7 @@
       "video": "src/v3/flow/walk_down.mp4",
       "start": 52,
       "period": 45,
-      "count": 12,
+      "count": 16,
       "fps": 6,
       "idle_as": "idle"
     }

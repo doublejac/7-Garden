@@ -18,7 +18,7 @@ class_name InteriorMap
 extends Node2D
 
 const TILE := 64
-const SPEED := 150.0
+const SPEED := 120.0   # 서하는 아픈 아이라 천천히 (걷기 그림 속도와 맞춤)
 const ATLAS := "res://assets/art/tiles/interior.png"
 const PROP_DIR := "res://assets/art/props/interior/"
 const WALL_FACE := Vector2i(4, 2)   # 2칸 폭 × 3칸 높이
