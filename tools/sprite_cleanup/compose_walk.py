@@ -131,6 +131,19 @@ def swing_hand_side(img, sa, s_hem, dx):
     return out
 
 
+def bob(img, s_hem, dy):
+    """원피스 밑단 위(머리·몸)만 dy px 내림/올림. 다리는 바닥에 그대로."""
+    a = np.array(img).copy()
+    top = a[:s_hem + 1].copy()
+    a[:s_hem + 1] = 0
+    if dy > 0:
+        a[dy:s_hem + 1] = np.where(top[:-dy][..., 3:4] > 0, top[:-dy], a[dy:s_hem + 1])
+    else:
+        d = -dy
+        a[:s_hem + 1 - d] = np.where(top[d:][..., 3:4] > 0, top[d:], a[:s_hem + 1 - d])
+    return Image.fromarray(a, "RGBA")
+
+
 def finish(out, meta, name, frames, cw, ch, fps, mirror_as, msg):
     sheet = Image.new("RGBA", (cw * len(frames), ch), (0, 0, 0, 0))
     for i, f in enumerate(frames):
@@ -278,7 +291,11 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0,
             (out / "_mid.png").unlink()
             meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
             meta["animations"].pop("_mid", None)
-        frames = [Image.fromarray(a1, "RGBA"), mid, Image.fromarray(a2, "RGBA"), mid]
+        # 몸 오르내림: 내딛기(체중이 실림)에서 1px 내려앉고, 중간 자세(다리를 모음)에서 1px 올라감
+        f1 = bob(Image.fromarray(a1, "RGBA"), s_hem, 1)
+        f2 = bob(Image.fromarray(a2, "RGBA"), s_hem, 1)
+        fm = bob(mid, s_hem, -1)
+        frames = [f1, fm, f2, fm]
         return finish(out, meta, name, frames, cw, ch, fps, mirror_as, f"{name}: 4칸 (옆모습, 다리 배율 x{k2:.2f})")
     if hands:
         # 팔 흔들림: 정지 그림의 손만 옮김 (화면 오른쪽 손 = 앞으로 → 아래로, 왼쪽 손 = 뒤로 → 소매 속으로 위로)
