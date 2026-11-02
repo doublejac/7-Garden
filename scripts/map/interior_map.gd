@@ -12,6 +12,7 @@
 #              h: (x, y)~(x+1, y) 두 칸, swing 1 = 아래쪽 방으로 열림
 #              f: (x, y)~(x+1, y+3) 벽 윗면 1줄 + 벽 앞면 3줄을 뚫은 자리에 정면 문 그림
 #   labels   : [글자, x, y]  (개발용 방 이름)
+#   npcs     : {id, name, scene, x, y, mode, route} 스스로 걷는 인물 (scripts/npc/npc.gd). 단독 실행 때만 생김
 #   moonlights: [x, y, 크기]
 #   corridor : 복도 바닥 기본값 (CORRIDORS의 키)
 class_name InteriorMap
@@ -57,12 +58,18 @@ var doors: Array[Dictionary] = []
 var corridor_key := "floral"
 var moon_lights: Array[PointLight2D] = []
 var label_root: Node2D
+var nav_blocks: Array[Rect2] = []   # 길찾기용 막힌 영역 (벽 제외: 벽은 layout에서 바로 읽음)
+var nav: AStarGrid2D                # 인물(NPC) 길찾기: NAV px 칸, 칸 가운데 = 발 위치
+const NAV := 32
 
 # 개발용 (단독 실행 때만)
 var player: CharacterBody2D
 var avatar: CharacterSprite
 const CHARACTERS := [["서하", "res://scenes/characters/seoha.tscn"], ["채린", "res://scenes/characters/chaerin.tscn"], ["도윤", "res://scenes/characters/doyun.tscn"]]
 var char_index := 0
+var npcs: Array[Npc] = []
+const NPC_MODES := [["stay", "가만히"], ["follow", "따라오기"], ["film", "촬영"], ["wander", "배회"]]
+var npc_mode_i := 2
 var camera: Camera2D
 var modulate_node: CanvasModulate
 var grid: Node2D
@@ -100,6 +107,7 @@ func _ready() -> void:
 			var w := spr.texture.get_width() * 0.9
 			var r := Rect2(Vector2(p[1] * TILE - w / 2.0, p[3][1] * TILE), Vector2(w, p[3][3] * TILE))
 			blockers.add_child(_box(r))
+			nav_blocks.append(r)
 	for d in data.get("doors", []):
 		_add_door(d)
 	for m in data.get("moonlights", []):
@@ -322,6 +330,11 @@ func _add_door(d: Dictionary) -> void:
 	if leaf_rect.has_area():
 		leaf_body.add_child(_box(Rect2(leaf_rect.position - node.position, leaf_rect.size)))
 	node.add_child(leaf_body)
+	nav_blocks.append_array(posts)
+	if leaf_rect.has_area():
+		nav_blocks.append(leaf_rect)   # 열린 문짝 자리는 늘 피해 감
+	if d.get("locked", false):
+		nav_blocks.append(rect)
 	var door := {"type": type, "closed": closed, "leaf": leaf, "axis": axis, "body": body, "leaf_body": leaf_body,
 		"rect": rect, "leaf_rect": leaf_rect, "center": rect.get_center(), "locked": d.get("locked", false),
 		"tween": null}
@@ -430,6 +443,101 @@ func _push_out(r: Rect2, feet: Rect2, type: String) -> Vector2:
 	return p if p.length() <= 36.0 else Vector2.ZERO
 
 
+# ── 길찾기 (NPC) ──────────────────────────────────────────
+## 발 위치 격자. 각 칸 가운데에 발(56×20 상자)을 놓았을 때 벽·가구·문틀·잠긴 문에 닿으면 막힌 칸.
+## 잠기지 않은 문은 닫혀 있어도 지나갈 수 있는 칸으로 둠 (NPC가 다가가서 직접 엶)
+func build_nav() -> void:
+	var w := int(size_px().x) / 8
+	var h := int(size_px().y) / 8
+	var solid := PackedByteArray()
+	solid.resize(w * h)
+	for y in layout.size():
+		var row: String = layout[y]
+		for x in row.length():
+			if row[x] == "#" or row[x] == "W":
+				_fill(solid, w, Rect2(x * TILE, y * TILE, TILE, TILE))
+	for r in nav_blocks:
+		_fill(solid, w, r)
+	nav = AStarGrid2D.new()
+	nav.region = Rect2i(0, 0, int(size_px().x) / NAV, int(size_px().y) / NAV)
+	nav.cell_size = Vector2(NAV, NAV)
+	nav.offset = Vector2(NAV / 2.0, NAV / 2.0)
+	nav.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	nav.update()
+	for cy in nav.region.size.y:
+		for cx in nav.region.size.x:
+			var c := Vector2(cx * NAV + NAV / 2.0, cy * NAV + NAV / 2.0)
+			var x0 := int(c.x - 28) / 8
+			var x1 := int(c.x + 27) / 8
+			var y0 := int(c.y - 20) / 8
+			var y1 := int(c.y - 1) / 8
+			var blocked := x0 < 0 or y0 < 0 or x1 >= w or y1 >= h
+			if not blocked:
+				for yy in range(y0, y1 + 1):
+					for xx in range(x0, x1 + 1):
+						if solid[yy * w + xx]:
+							blocked = true
+							break
+					if blocked:
+						break
+			nav.set_point_solid(Vector2i(cx, cy), blocked)
+
+
+func _fill(solid: PackedByteArray, w: int, r: Rect2) -> void:
+	var h := solid.size() / w
+	for yy in range(maxi(0, int(r.position.y) / 8), mini(h, int(ceil(r.end.y / 8.0)))):
+		for xx in range(maxi(0, int(r.position.x) / 8), mini(w, int(ceil(r.end.x / 8.0)))):
+			solid[yy * w + xx] = 1
+
+
+func _nav_cell(pos: Vector2) -> Vector2i:
+	var c := Vector2i(int(pos.x) / NAV, int(pos.y) / NAV)
+	c = c.clamp(Vector2i.ZERO, nav.region.size - Vector2i.ONE)
+	if not nav.is_point_solid(c):
+		return c
+	for rad in range(1, 5):   # 막힌 칸이면 가장 가까운 빈칸
+		var best := Vector2i(-1, -1)
+		var bd := INF
+		for dy in range(-rad, rad + 1):
+			for dx in range(-rad, rad + 1):
+				var n := c + Vector2i(dx, dy)
+				if nav.is_in_boundsv(n) and not nav.is_point_solid(n):
+					var d := (Vector2(n) * NAV + Vector2.ONE * NAV / 2.0).distance_to(pos)
+					if d < bd:
+						bd = d
+						best = n
+		if best.x >= 0:
+			return best
+	return c
+
+
+## from → to 발 위치 경로 (맵 좌표). 못 가면 갈 수 있는 데까지
+func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
+	if nav == null:
+		build_nav()
+	return nav.get_point_path(_nav_cell(from), _nav_cell(to), true)
+
+
+func is_walkable(pos: Vector2) -> bool:
+	if nav == null:
+		build_nav()
+	var c := Vector2i(int(pos.x) / NAV, int(pos.y) / NAV)
+	return nav.is_in_boundsv(c) and not nav.is_point_solid(c)
+
+
+## pos(발)가 닫힌 문 자리 근처면 그 문 (NPC가 열 때 씀)
+func closed_door_near(pos: Vector2, margin := 24.0) -> Dictionary:
+	for door in doors:
+		if not door["open"] and not door["locked"] and (door["rect"] as Rect2).grow(margin).has_point(pos):
+			return door
+	return {}
+
+
+func open_door(door: Dictionary) -> void:
+	if not door["open"]:
+		_set_door(door, true)
+
+
 func _make_light(pos: Vector2, size_scale: float) -> PointLight2D:
 	var tex := GradientTexture2D.new()
 	tex.fill = GradientTexture2D.FILL_RADIAL
@@ -465,8 +573,9 @@ func _setup_dev() -> void:
 	shape.shape = prect
 	shape.position = Vector2(0, -10)
 	player.add_child(shape)
-	_set_character(0)
 	objects.add_child(player)
+	_spawn_npcs()
+	_set_character(0)
 	camera = Camera2D.new()
 	camera.limit_left = 0
 	camera.limit_top = 0
@@ -497,6 +606,23 @@ func _setup_dev() -> void:
 	_apply_time()
 
 
+## 맵 데이터의 npcs: {id, name, scene, x, y, mode, route: [[x, y], ...]}  (타일 단위, 발 위치)
+func _spawn_npcs() -> void:
+	for n in data.get("npcs", []):
+		var npc := Npc.new()
+		npc.map = self
+		npc.sprite_scene = n["scene"]
+		npc.display_name = n.get("name", n["id"])
+		npc.position = Vector2(n["x"], n["y"]) * TILE
+		npc.home = npc.position
+		for r in n.get("route", []):
+			npc.route.append(Vector2(r[0], r[1]) * TILE)
+		npc.target = player
+		npc.mode = n.get("mode", "stay")
+		objects.add_child(npc)
+		npcs.append(npc)
+
+
 ## 개발용: 조종하는 인물 바꾸기 (C 키). 바라보던 방향은 그대로
 func _set_character(i: int) -> void:
 	var facing := "down"
@@ -508,6 +634,11 @@ func _set_character(i: int) -> void:
 	avatar.facing = facing
 	player.add_child(avatar)
 	avatar.stand()
+	for npc in npcs:   # 지금 조종하는 인물과 같은 NPC는 숨김
+		var me: bool = npc.display_name == CHARACTERS[i][0]
+		npc.visible = not me
+		npc.process_mode = Node.PROCESS_MODE_DISABLED if me else Node.PROCESS_MODE_INHERIT
+		npc.collision_layer = 0 if me else 2
 
 
 func feet_rect() -> Rect2:
@@ -531,6 +662,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_tree().quit()
 		KEY_C:
 			_set_character((char_index + 1) % CHARACTERS.size())
+			_update_info()
+		KEY_N:
+			npc_mode_i = (npc_mode_i + 1) % NPC_MODES.size()
+			for npc in npcs:
+				npc.mode = NPC_MODES[npc_mode_i][0]
 			_update_info()
 		KEY_E:
 			var r := toggle_door_near(feet_rect())
@@ -564,9 +700,19 @@ func _apply_time() -> void:
 
 
 func _update_info(note := "") -> void:
-	info.text = "[%s]  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · E 문 · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
-		CHARACTERS[char_index][0], data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
+	info.text = "[%s]%s  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · N 도윤 행동 · E 문 · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
+		CHARACTERS[char_index][0], _npc_info(), data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
 		roundi(camera.zoom.x * 100), note]
+
+
+func _npc_info() -> String:
+	var parts := PackedStringArray()
+	for npc in npcs:
+		if npc.visible:
+			for m in NPC_MODES:
+				if m[0] == npc.mode:
+					parts.append("%s: %s" % [npc.display_name, m[1]])
+	return ("  · " + ", ".join(parts)) if parts.size() > 0 else ""
 
 
 func _make_grid() -> Node2D:
