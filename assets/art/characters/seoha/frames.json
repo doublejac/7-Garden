@@ -14,7 +14,7 @@
       "loop": true
     },
     "idle_up": {
-      "frames": 4,
+      "frames": 8,
       "cell": [
         108,
         157
@@ -50,12 +50,12 @@
       "loop": true
     },
     "walk_up": {
-      "frames": 8,
+      "frames": 12,
       "cell": [
         108,
         157
       ],
-      "fps": 10,
+      "fps": 6,
       "loop": true
     },
     "walk_right": {

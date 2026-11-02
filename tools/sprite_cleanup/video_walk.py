@@ -112,7 +112,7 @@ def write_idle(out, meta, name, mirror, cell, cw, ch):
         meta["animations"][nm] = {"frames": len(seq), "cell": [cw, ch], "fps": 3, "loop": True}
 
 
-def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None, idle_as=None, idle_mirror=None):
+def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as=None, idle_as=None, idle_mirror=None, proportion=True):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -167,6 +167,8 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
     ku = (s_chin - s_top) / (c_chin - c_top)
     kl = (s_bot - s_chin) / (c_bot - c_chin)
     kxx = head_width(stand) / head_width(cells[0])
+    if not proportion:   # 뒷모습처럼 턱(얼굴)이 안 보이면 비율 맞춤을 하지 않음 (키만 맞춤)
+        ku = kl = 1.0
     t0 = c_top
     sheet = Image.new("RGBA", (cw * len(cells), ch), (0, 0, 0, 0))
     fixed = []

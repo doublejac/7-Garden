@@ -524,6 +524,17 @@
       "count": 12,
       "fps": 6,
       "idle_as": "idle"
+    },
+    {
+      "name": "walk_up",
+      "idle": "idle_up",
+      "video": "src/v3/flow/walk_up.mp4",
+      "start": 54,
+      "period": 45,
+      "count": 12,
+      "fps": 6,
+      "idle_as": "idle_up",
+      "proportion": false
     }
   ]
 }
