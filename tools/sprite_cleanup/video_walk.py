@@ -69,40 +69,31 @@ def main(out_dir, name, idle_name, video, start, period, count, fps=8, mirror_as
         cell.alpha_composite(f, (dx, dy)) if dx >= 0 and dy >= 0 else cell.paste(f, (dx, dy), f)
         cells.append(cell)
         sheet.alpha_composite(cell, (i * cw, 0))
-    # 머리는 정지 그림으로: 영상은 머리를 작게, 몸을 길게 다시 그려서 정지와 번갈아 나오면 머리 크기가 튐.
-    # 칸마다 영상의 턱 아래 몸을 정지 그림의 몸 길이에 맞춰 늘이고, 그 위에 정지 그림의 머리를 붙임 (영상의 오르내림은 유지)
-    _, s_chin, _ = chin_rows(stand)
-    t0 = None
+    # 비율 맞춤 (그림을 섞지 않음): 영상은 머리를 작게·몸을 길게 그려서, 같은 영상 그림을 턱에서 나눠
+    # 머리는 정지 그림 머리 크기로, 몸은 정지 그림 몸 길이로 따로 늘이고 줄임. 가로 배율은 둘이 같아 이음매가 그대로 맞음.
+    s_top, s_chin, _ = chin_rows(stand)
+    c_top, c_chin, c_bot = chin_rows(cells[0])
+    ku = (s_chin - s_top) / (c_chin - c_top)
+    kl = (s_bot - s_chin) / (c_bot - c_chin)
+    kxx = head_width(stand) / head_width(cells[0])
+    t0 = c_top
     sheet = Image.new("RGBA", (cw * count, ch), (0, 0, 0, 0))
     fixed = []
+    sx = np.nonzero((sa[s_chin + 2:s_chin + 2 + int((s_bot - s_chin) * 0.55), :, 3] > 128).any(0))[0]
     for i, cell in enumerate(cells):
-        top, v_chin, v_bot = chin_rows(cell)
-        t0 = top if t0 is None else t0
-        dy = int(top - t0)                                   # 영상의 몸 오르내림
-        body = cell.crop((0, v_chin, cw, v_bot + 1))
-        bh = s_bot + 1 - (s_chin + dy)
-        # 폭은 상체(카디건)만으로 잼: 다리가 벌어진 칸에서 몸이 홀쭉해지지 않게
-        bb = np.array(body)
-        bx = np.nonzero((bb[: int(bb.shape[0] * 0.55), :, 3] > 128).any(0))[0]
-        sx = np.nonzero((sa[s_chin + 2:s_chin + 2 + int((s_bot - s_chin) * 0.55), :, 3] > 128).any(0))[0]
-        kx = (sx[-1] - sx[0] + 1) / (bx[-1] - bx[0] + 1)      # 몸 폭도 정지 그림에 맞춤
-        body = hq_resize_xy(body, max(1, round(cw * kx)), bh)
-        bxs = np.nonzero((np.array(body)[: int(bh * 0.55), :, 3] > 128).any(0))[0]
-        ox = int(round((sx[0] + sx[-1]) / 2 - (bxs[0] + bxs[-1]) / 2))
+        top, chin, bot = chin_rows(cell)
+        w = max(1, round(cw * kxx))
+        up = hq_resize_xy(cell.crop((0, 0, cw, chin)), w, max(1, round(chin * ku)))
+        low = hq_resize_xy(cell.crop((0, chin, cw, bot + 1)), w, max(1, round((bot + 1 - chin) * kl)))
+        g = Image.new("RGBA", (w, up.height + low.height), (0, 0, 0, 0))
+        g.alpha_composite(up, (0, 0))
+        g.alpha_composite(low, (0, up.height))
+        ga = np.array(g)
+        gx = np.nonzero((ga[up.height + 2:up.height + 2 + int(low.height * 0.55), :, 3] > 128).any(0))[0]
+        ox = int(round((sx[0] + sx[-1]) / 2 - (gx[0] + gx[-1]) / 2))
+        oy = s_bot + 1 - g.height                     # 발바닥을 바닥선에
         out_c = Image.new("RGBA", (cw, ch), (0, 0, 0, 0))
-        out_c.alpha_composite(body, (max(0, ox), s_chin + dy)) if ox >= 0 else out_c.paste(body, (ox, s_chin + dy), body)
-        # 정지 그림을 목 아래 가슴까지(겨드랑이 높이) 덮고, 그 아래 몇 줄은 섞어서 이음매를 숨김
-        s_hem2 = hem_row(sa)
-        cut = s_chin + int((s_hem2 - s_chin) * 0.45)
-        blend = 5
-        top_part = np.array(stand.crop((0, 0, cw, cut + blend))).astype(float)
-        for r in range(blend):
-            top_part[cut + r, :, 3] *= 1 - (r + 1) / (blend + 1)
-        top_img = Image.fromarray(top_part.clip(0, 255).astype(np.uint8), "RGBA")
-        oc = np.array(out_c)
-        oc[max(0, dy):cut + dy] = 0                              # 영상의 목·가슴은 지움
-        out_c = Image.fromarray(oc, "RGBA")
-        out_c.alpha_composite(top_img, (0, dy)) if dy >= 0 else out_c.paste(top_img, (0, dy), top_img)
+        out_c.paste(g, (ox, oy), g)
         fixed.append(out_c)
         sheet.alpha_composite(out_c, (i * cw, 0))
     cells = fixed
