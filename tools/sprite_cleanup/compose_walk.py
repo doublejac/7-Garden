@@ -148,7 +148,7 @@ def finish(out, meta, name, frames, cw, ch, fps, mirror_as, msg):
     print(msg)
 
 
-def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0, side=False, mirror_as=None):
+def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0, side=False, mirror_as=None, mid_src=None):
     out = Path(out_dir)
     meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
     cw, ch = meta["cell"]
@@ -271,7 +271,14 @@ def main(out_dir, name, idle_name, legs_src, fps=6, body=False, hands=0, lift=0,
     if side:
         a1 = swing_hand_side(step, sa, s_hem, hands) if hands else step
         a2 = swing_hand_side(step, sa, s_hem, -hands) if hands else step
-        frames = [Image.fromarray(a1, "RGBA"), stand, Image.fromarray(a2, "RGBA"), stand]
+        mid = stand
+        if mid_src:   # 중간 자세(두 발이 지나가는 순간)도 같은 방식으로 합성
+            main(out_dir, "_mid", idle_name, mid_src, fps, side=True)
+            mid = Image.open(out / "_mid.png").crop((0, 0, cw, ch))
+            (out / "_mid.png").unlink()
+            meta = json.loads((out / "frames.json").read_text(encoding="utf-8"))
+            meta["animations"].pop("_mid", None)
+        frames = [Image.fromarray(a1, "RGBA"), mid, Image.fromarray(a2, "RGBA"), mid]
         return finish(out, meta, name, frames, cw, ch, fps, mirror_as, f"{name}: 4칸 (옆모습, 다리 배율 x{k2:.2f})")
     if hands:
         # 팔 흔들림: 정지 그림의 손만 옮김 (화면 오른쪽 손 = 앞으로 → 아래로, 왼쪽 손 = 뒤로 → 소매 속으로 위로)
