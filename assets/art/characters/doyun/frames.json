@@ -10,7 +10,7 @@
         124,
         192
       ],
-      "fps": 5,
+      "fps": 8,
       "loop": true
     },
     "walk_left": {
@@ -19,7 +19,7 @@
         124,
         192
       ],
-      "fps": 5,
+      "fps": 8,
       "loop": true
     },
     "idle_right": {
@@ -46,7 +46,7 @@
         124,
         192
       ],
-      "fps": 5,
+      "fps": 6,
       "loop": true
     },
     "idle": {
@@ -64,7 +64,7 @@
         124,
         192
       ],
-      "fps": 5,
+      "fps": 6,
       "loop": true
     },
     "idle_up": {

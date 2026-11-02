@@ -32,6 +32,10 @@ HEAD_W = 72                # 서하 머리 폭
 HEAD_H = 76                # 머리 꼭대기~턱 (그대로 둠)
 TOTAL = 178                # 정지 키
 
+# 걷기 재생 속도. 맵 이동 속도(150px/s)에 비해 발이 바닥을 미는 속도가 서하와 비슷하게:
+# 옆 보폭 약 53px·한 바퀴 두 걸음 → 8fps면 1.5초에 두 걸음. 정면·뒤는 서하와 같은 2초에 두 걸음
+FPS = {"walk_right": 8, "walk_down": 6, "walk_up": 6}
+
 # 이름, 영상, 시작, 주기(프레임), 칸 수, 머리 폭 보정, 좌우반전 이름, 정지 이름, 반전 정지, 깜빡임("frame:N" / "draw" / None)
 CLIPS = [
     ("walk_right", "walk_right.mp4", 92, 56, 12, 762 / 717, "walk_left", "idle_right", "idle_left", "frame:12"),
@@ -178,7 +182,8 @@ def main():
         F = read_video(SRC / video)
         make = maker(F, start, head_fix)
         cells = [make(start + round(j * period / count)) for j in range(count)]
-        fps = round(count / (period / 24))
+        # 영상 속도 그대로(5fps)면 걸음이 느려 맵 위를 미끄러지듯 보임 → 서하와 같은 걸음 빠르기로
+        fps = FPS[name]
         sheet(cells, name, meta, fps)
         if mirror:
             sheet(cells, mirror, meta, fps, flip=True)
