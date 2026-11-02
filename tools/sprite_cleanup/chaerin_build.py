@@ -18,6 +18,7 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage as ndi
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
@@ -46,7 +47,8 @@ def read_video(path):
 
 def keyed(F, i):
     a = F[i].copy()
-    cols = np.nonzero(~(a.max(2) < 20).all(0))[0]     # 좌우 검은 띠 제거
+    cols = np.nonzero((a.max(2) > 45).mean(0) > 0.5)[0]   # 좌우 검은 띠 제거 (띠 경계의 덜 검은 줄까지)
+    cols = cols[3:-3]
     return Image.fromarray(key_green(a[:, cols[0]:cols[-1] + 1]), "RGBA")
 
 
@@ -84,6 +86,10 @@ def clip_frames(F, start, period, count, head_w):
 def place(o, cx):
     a = np.array(o)
     a[a[..., 3] < 60] = 0          # 영상 압축 때문에 생긴 희미한 테두리 제거
+    lab, n = ndi.label(a[..., 3] > 0)   # 몸에서 떨어진 작은 점·줄(검은 띠 찌꺼기 등) 제거
+    if n > 1:
+        sz = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
+        a[np.isin(lab, [i + 1 for i, v in enumerate(sz) if v < 40])] = 0
     o = Image.fromarray(a, "RGBA")
     cell = Image.new("RGBA", (CW, CH))
     cell.alpha_composite(o, (CW // 2 - cx, CH - 2 - o.height))
