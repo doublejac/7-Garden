@@ -1,0 +1,80 @@
+{
+  "cell": [
+    124,
+    192
+  ],
+  "animations": {
+    "walk_right": {
+      "frames": 12,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 5,
+      "loop": true
+    },
+    "walk_left": {
+      "frames": 12,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 5,
+      "loop": true
+    },
+    "idle_right": {
+      "frames": 8,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "idle_left": {
+      "frames": 8,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "walk_down": {
+      "frames": 12,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 5,
+      "loop": true
+    },
+    "idle": {
+      "frames": 8,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 3,
+      "loop": true
+    },
+    "walk_up": {
+      "frames": 12,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 5,
+      "loop": true
+    },
+    "idle_up": {
+      "frames": 8,
+      "cell": [
+        124,
+        192
+      ],
+      "fps": 3,
+      "loop": true
+    }
+  }
+}

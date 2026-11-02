@@ -61,7 +61,7 @@ var label_root: Node2D
 # 개발용 (단독 실행 때만)
 var player: CharacterBody2D
 var avatar: CharacterSprite
-const CHARACTERS := [["서하", "res://scenes/characters/seoha.tscn"], ["채린", "res://scenes/characters/chaerin.tscn"]]
+const CHARACTERS := [["서하", "res://scenes/characters/seoha.tscn"], ["채린", "res://scenes/characters/chaerin.tscn"], ["도윤", "res://scenes/characters/doyun.tscn"]]
 var char_index := 0
 var camera: Camera2D
 var modulate_node: CanvasModulate

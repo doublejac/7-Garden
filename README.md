@@ -63,7 +63,13 @@ tests/         test_runner.tscn  자동 점검
   - 정면 영상은 Flow가 같은 프레임을 반복해 멈춘 구간이 있어 실제로 움직이는 구간만 씀. 깜빡임 없는 구간을 루프로
   - 정지 = 루프 첫 장면 + 숨쉬기 + 영상 속 실제 눈 감은 장면의 눈 부분
 - 옆모습 바퀴엔 바큇살이 있어야 굴러가는 게 보임 (`chaerin_side_spokes.jpg`). Flow 문장엔 "바퀴 위쪽을 잡고 민다, 링을 들지 않는다, 축 둘레를 돌리지 않는다"를 넣을 것
-- 맵 단독 실행 중 **C 키**로 서하 ↔ 채린 전환
+- 맵 단독 실행 중 **C 키**로 서하 → 채린 → 도윤 전환
+
+### 도윤 걷기·정지 (Google Flow 영상)
+- 원본: `tools/sprite_cleanup/src/doyun/` — 일러스트, 서하 정지 그림을 Gemini로 바꾼 3방향 그림, Flow 걷기 영상 `walk_right/down/up.mp4`
+- `python3 tools/sprite_cleanup/doyun_build.py` → `assets/art/characters/doyun/`, 그다음 `build_spriteframes.gd -- doyun`
+  - 머리 폭은 서하와 같게, 키는 서하의 1.2배(178px): 머리는 그대로 두고 턱 아래만 줄임
+  - 정지 = 영상 첫 장면(정지 그림) + 숨쉬기 + 깜빡임. 옆은 영상 속 눈 감은 장면, 정면은 영상에 깜빡임이 없어 그려 넣음
 
 ## 맵
 - 실내 맵은 공용 로더 `scripts/map/interior_map.gd`(InteriorMap) + 맵 데이터 `data/maps/<이름>.json` 한 쌍으로 만듭니다.
