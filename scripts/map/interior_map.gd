@@ -60,7 +60,9 @@ var label_root: Node2D
 
 # 개발용 (단독 실행 때만)
 var player: CharacterBody2D
-var seoha: CharacterSprite
+var avatar: CharacterSprite
+const CHARACTERS := [["서하", "res://scenes/characters/seoha.tscn"], ["채린", "res://scenes/characters/chaerin.tscn"]]
+var char_index := 0
 var camera: Camera2D
 var modulate_node: CanvasModulate
 var grid: Node2D
@@ -432,8 +434,7 @@ func _setup_dev() -> void:
 	shape.shape = prect
 	shape.position = Vector2(0, -10)
 	player.add_child(shape)
-	seoha = load("res://scenes/characters/seoha.tscn").instantiate()
-	player.add_child(seoha)
+	_set_character(0)
 	objects.add_child(player)
 	camera = Camera2D.new()
 	camera.limit_left = 0
@@ -465,6 +466,19 @@ func _setup_dev() -> void:
 	_apply_time()
 
 
+## 개발용: 조종하는 인물 바꾸기 (C 키). 바라보던 방향은 그대로
+func _set_character(i: int) -> void:
+	var facing := "down"
+	if avatar:
+		facing = avatar.facing
+		avatar.queue_free()
+	char_index = i
+	avatar = load(CHARACTERS[i][1]).instantiate()
+	avatar.facing = facing
+	player.add_child(avatar)
+	avatar.stand()
+
+
 func feet_rect() -> Rect2:
 	return Rect2(player.position + Vector2(-28, -20), Vector2(56, 20))
 
@@ -475,7 +489,7 @@ func _physics_process(_delta: float) -> void:
 	var dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	player.velocity = dir * SPEED
 	player.move_and_slide()
-	seoha.walk(dir)
+	avatar.walk(dir)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -484,6 +498,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	match event.keycode:
 		KEY_ESCAPE:
 			get_tree().quit()
+		KEY_C:
+			_set_character((char_index + 1) % CHARACTERS.size())
+			_update_info()
 		KEY_E:
 			var r := toggle_door_near(feet_rect())
 			if r == "locked":
@@ -514,8 +531,8 @@ func _apply_time() -> void:
 
 
 func _update_info(note := "") -> void:
-	info.text = "%s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · E 문 · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
-		data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
+	info.text = "[%s]  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · E 문 · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
+		CHARACTERS[char_index][0], data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
 		roundi(camera.zoom.x * 100), note]
 
 

@@ -56,6 +56,15 @@ tests/         test_runner.tscn  자동 점검
   - 뒷모습은 `proportion: false`(턱이 안 보임), `width_like: idle`(폭을 정면에 맞춤)
 - 새 영상 만들 때: Flow의 Frames 방식에 정지 그림(초록 배경)을 첫 프레임으로, "walk in place, camera fixed, demure tiny steps, arms close to body" 조건
 
+### 채린 휠체어 이동·정지 (Google Flow 영상)
+- 원본: `tools/sprite_cleanup/src/chaerin/` — 서하 정지 그림을 Gemini로 채린(휠체어)으로 바꾼 3방향 그림 + Flow 휠체어 밀기 영상 `push_right/down/up.mp4`
+- `python3 tools/sprite_cleanup/chaerin_build.py` → `assets/art/characters/chaerin/` 시트, 그다음 `build_spriteframes.gd -- chaerin`
+  - 머리(금발) 폭을 서하 머리 크기에 맞추고, 턱 아래(몸+휠체어)는 세로 76.5%로 줄임
+  - 정면 영상은 Flow가 같은 프레임을 반복해 멈춘 구간이 있어 실제로 움직이는 구간만 씀. 깜빡임 없는 구간을 루프로
+  - 정지 = 루프 첫 장면 + 숨쉬기 + 영상 속 실제 눈 감은 장면의 눈 부분
+- 옆모습 바퀴엔 바큇살이 있어야 굴러가는 게 보임 (`chaerin_side_spokes.jpg`). Flow 문장엔 "바퀴 위쪽을 잡고 민다, 링을 들지 않는다, 축 둘레를 돌리지 않는다"를 넣을 것
+- 맵 단독 실행 중 **C 키**로 서하 ↔ 채린 전환
+
 ## 맵
 - 실내 맵은 공용 로더 `scripts/map/interior_map.gd`(InteriorMap) + 맵 데이터 `data/maps/<이름>.json` 한 쌍으로 만듭니다.
   JSON 형식(바닥·벽 글자 배열, 가구, 문, 방 이름, 달빛)은 `interior_map.gd` 맨 위 설명 참고.
