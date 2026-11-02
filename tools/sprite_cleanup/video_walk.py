@@ -33,7 +33,20 @@ def blink(img):
     if n == 0:
         return img
     sizes = ndi.sum(np.ones(lab.shape), lab, range(1, n + 1))
-    ys, xs = np.nonzero(lab == np.argmax(sizes) + 1)
+    eyes = [i + 1 for i, sz in enumerate(sizes) if sz >= sizes.max() * 0.4]   # 정면은 눈이 둘
+    if len(eyes) > 1:
+        out = img
+        for e in eyes:
+            m = (lab == e)
+            out = _blink_one(out, m)
+        return out
+    return _blink_one(img, lab == np.argmax(sizes) + 1)
+
+
+def _blink_one(img, mask):
+    from scipy import ndimage as ndi
+    a = np.array(img).copy()
+    ys, xs = np.nonzero(mask)
     y0, y1, x0, x1 = ys.min(), ys.max(), xs.min(), xs.max()
     skin = a[min(a.shape[0] - 1, y1 + 3), (x0 + x1) // 2].copy()
     lash = a[y0 - 1, (x0 + x1) // 2].copy()
@@ -41,7 +54,7 @@ def blink(img):
         lash = np.array([40, 30, 40, 255], np.uint8)
     # 눈 둘레에서 피부가 아닌 것은 모두 피부색으로 덮되, 바깥까지 이어진 머리카락 덩어리는 남김
     pad = 8
-    by0, by1, bx0, bx1 = y0 - 3, y1 + 3, x0 - 7, x1 + 3
+    by0, by1, bx0, bx1 = y0 - 3, y1 + 3, x0 - 5, x1 + 3
     R0, R1, C0, C1 = by0 - pad, by1 + pad, bx0 - pad, bx1 + pad
     big = a[R0:R1, C0:C1]
     rr, gg, bb = (big[..., i].astype(int) for i in range(3))
@@ -56,7 +69,19 @@ def blink(img):
     lum = (rr + gg + bb) / 3
     small = inner & nonskin & ((lum < 120) | (bb > rr + 20) | ((lum > 170) & (bb >= rr - 8)))
     small[:pad + 2] &= lum[:pad + 2] < 110   # 위쪽(앞머리 닿는 줄)은 어두운 속눈썹만
-    big[(eye_blob | small) & inner] = skin
+    hair_like = np.isin(lab, border[border > 0])
+    spread = np.maximum(np.maximum(rr, gg), bb) - np.minimum(np.minimum(rr, gg), bb)
+    small &= ~(hair_like & (lum > 120) & (spread < 30) & ~((lum > 170) & (bb >= rr - 8) & (lum < 200)))   # 바깥으로 이어진 회색 머리카락만 그대로
+    gray_hair = hair_like & (lum > 120) & (spread < 30) & ~((lum > 170) & (bb >= rr - 8) & (lum < 200))
+    kill = inner & (big[..., 3] > 128) & ~gray_hair   # 눈 상자 안은 머리카락 말고 전부 얼굴 바탕색으로 (눈두덩 그늘 점까지)
+    # 지운 자리는 얼굴 바탕색(눈 아래 피부에서 가장 흔한 색)으로 메움. 도트 얼굴은 바탕색이 거의 한 색이라 자국이 안 남음
+    below = big[inner.nonzero()[0].max() + 1: inner.nonzero()[0].max() + 6, pad:-pad]
+    bm = (below[..., 0] > 200) & (below[..., 1] > 150) & (below[..., 0].astype(int) - below[..., 2] > 15)
+    cols = [tuple(c) for c in below[bm][:, :3]] or [tuple(skin[:3])]
+    base = max(set(cols), key=cols.count)
+    col = big[..., :3].astype(float)
+    col[kill] = base
+    big[..., :3] = col.round().astype(np.uint8)
     # 감은 눈: 아래로 살짝 휜 2px 선 (양 끝이 1px 위)
     ly = y0 + (y1 - y0) * 2 // 3
     xa, xb = x0, x1 + 1
