@@ -3,9 +3,8 @@
 #
 # 행동(mode)
 #   "stay"   제자리. target이 있으면 그쪽을 바라봄
-#   "follow" target 뒤를 따라감 (FOLLOW_NEAR 안이면 멈춤, 멀어지면 서두름)
-#   "film"   target을 캠코더로 찍음: 조금 떨어진 거리(FILM_NEAR~FILM_FAR)를 유지하고, 서면 늘 target을 바라봄.
-#            머리 위에 ● REC 표시. 벽에 가려 안 보이면 보이는 곳까지 다가감
+#   "film"   그 자리에 서서 target을 캠코더로 찍음: 따라다니지는 않고 몸만 target 쪽으로 돌림.
+#            머리 위 ● REC는 target이 보일 때(벽에 안 가릴 때)만 켜짐. 장면(이벤트)에서 잠깐 쓰는 용도
 #   "wander" 집(home) 근처를 천천히 돌아다님
 #   "patrol" route(발 위치 목록)를 차례로 돌며 걸음
 #
@@ -15,15 +14,11 @@
 class_name Npc
 extends CharacterBody2D
 
-const FOLLOW_NEAR := 110.0   # 이보다 가까우면 따라가기 멈춤
-const FILM_NEAR := 170.0     # 찍을 때 이보다 가까우면 살짝 물러남
-const FILM_FAR := 290.0      # 찍을 때 이보다 멀거나 안 보이면 다가감
 const REPATH := 0.35         # 목표가 움직이면 이 간격(초)마다 길을 다시 찾음
 
 @export var sprite_scene := "res://scenes/characters/doyun.tscn"
 @export var display_name := "도윤"
 @export var walk_speed := 125.0     # 평소 걸음 (서하 150보다 조금 느림)
-@export var hurry_speed := 175.0    # 많이 떨어졌을 때
 @export var mode := "stay":
 	set(v):
 		mode = v
@@ -82,10 +77,8 @@ func _physics_process(delta: float) -> void:
 	if rec.visible:
 		rec.modulate.a = 1.0 if fmod(_rec_t, 1.0) < 0.6 else 0.25
 	match mode:
-		"follow":
-			_do_follow(delta)
 		"film":
-			_do_film(delta)
+			_do_film()
 		"wander":
 			_do_wander(delta)
 		"patrol":
@@ -95,33 +88,9 @@ func _physics_process(delta: float) -> void:
 
 
 # ── 행동 ─────────────────────────────────────────────────
-func _do_follow(delta: float) -> void:
-	if target == null:
-		return _stand()
-	var d := position.distance_to(target.position)
-	if d < FOLLOW_NEAR:
-		_path = PackedVector2Array()
-		return _stand_facing_target()
-	_chase(target.position, delta, hurry_speed if d > 420.0 else walk_speed)
-
-
-func _do_film(delta: float) -> void:
-	if target == null:
-		return _stand()
-	var d := position.distance_to(target.position)
-	var seen := _can_see(target.position)
-	if d > FILM_FAR or not seen:
-		_chase(target.position, delta, hurry_speed if d > 480.0 else walk_speed)
-	elif d < FILM_NEAR:
-		# 너무 가까우면 반대쪽으로 한두 걸음 물러남 (막혀 있으면 그대로)
-		var back := position + (position - target.position).normalized() * 64.0
-		if map.is_walkable(back):
-			_chase(back, delta, walk_speed * 0.7, false)
-		else:
-			_stand_facing_target()
-	else:
-		_path = PackedVector2Array()
-		_stand_facing_target()
+func _do_film() -> void:
+	_stand_facing_target()
+	rec.visible = target != null and _can_see(target.position)
 
 
 func _do_wander(delta: float) -> void:

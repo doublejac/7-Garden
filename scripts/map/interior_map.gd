@@ -68,8 +68,8 @@ var avatar: CharacterSprite
 const CHARACTERS := [["서하", "res://scenes/characters/seoha.tscn"], ["채린", "res://scenes/characters/chaerin.tscn"], ["도윤", "res://scenes/characters/doyun.tscn"]]
 var char_index := 0
 var npcs: Array[Npc] = []
-const NPC_MODES := [["stay", "가만히"], ["follow", "따라오기"], ["film", "촬영"], ["wander", "배회"]]
-var npc_mode_i := 2
+const NPC_MODES := [["wander", "배회"], ["stay", "가만히"], ["film", "촬영"]]
+var npc_mode_i := 0
 var camera: Camera2D
 var modulate_node: CanvasModulate
 var grid: Node2D
