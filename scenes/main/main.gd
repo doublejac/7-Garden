@@ -16,6 +16,8 @@ var _cg_tween: Tween
 var _gallery: PackedStringArray = []   # 일러스트 보기(개발용)에서 넘겨 볼 이름들
 var _gallery_i := -1
 var _gallery_label: Label
+var _sketch: Sketchbook
+var _after_sketch := false   # 그림 놀이 뒤 채린 반응을 보여 주는 중 (클릭하면 타이틀로)
 var _fx: ColorRect
 var _debug: Label
 var _box: PanelContainer
@@ -121,6 +123,11 @@ func _on_choices(choices: Array) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _gallery_i >= 0:
 		_gallery_input(event)
+		return
+	if _after_sketch:
+		if event.is_action_pressed("ui_accept") or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+			_after_sketch = false
+			_show_title()
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
 		_debug.visible = not _debug.visible
@@ -228,6 +235,24 @@ func _gallery_input(event: InputEvent) -> void:
 		_show_gallery_item()
 
 
+## 그림 그리기 놀이. 다 그리면 채린의 반응 (2회차면 붉은 속마음도)
+func _open_sketch(color_loss: bool, loop: int) -> void:
+	_menu.hide()
+	_box.hide()
+	_sketch = Sketchbook.new()
+	_sketch.color_loss = color_loss
+	add_child(_sketch)
+	_sketch.finished.connect(func(_img: Image, empty: bool, _path: String):
+		_sketch.queue_free()
+		var r := Sketchbook.pick_reaction(empty)
+		_clear_choices()
+		_box.show()
+		_speaker.text = "유채린"
+		_text.text = r["text"]
+		_inner.text = r["inner"] if loop > 1 else ""
+		_after_sketch = true)
+
+
 func _show_title() -> void:
 	_hide_cg(false)
 	_box.hide()
@@ -242,6 +267,8 @@ func _show_title() -> void:
 	_menu_button("새로 시작 (1회차)", _start_new.bind(1))
 	_menu_button("2회차로 시작 (개발용)", _start_new.bind(2))
 	_menu_button("일러스트 보기 (개발용)", _open_gallery)
+	_menu_button("그림 그리기 (개발용)", _open_sketch.bind(false, 1))
+	_menu_button("그림 그리기 · 색 잃은 뒤 · 2회차 (개발용)", _open_sketch.bind(true, 2))
 	if SaveManager.has_slot(SaveManager.AUTO_SLOT):
 		var info := SaveManager.slot_info(SaveManager.AUTO_SLOT)
 		_menu_button("이어하기 (%d회차 %d일 차)" % [info.loop, info.day], _continue_from.bind(SaveManager.AUTO_SLOT))
