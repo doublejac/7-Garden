@@ -77,6 +77,15 @@ tests/         test_runner.tscn  자동 점검
 - 1일 차: `L1_D1_S05_005`(온실 별 보기)에서 켜고 `L1_D1_S06_001`(새벽)에서 끔
 - 타이틀의 **일러스트 보기 (개발용)**: 폴더의 일러스트를 하나씩 넘겨 봄 (클릭 다음, Esc 타이틀)
 
+## 그림책 「누비각시와 아홉 개의 껍데기」
+- 채린이 아끼는 그림동화. 설정·본문: Claude 문서와 구글 문서 「누비각시와 아홉 개의 껍데기」
+- 글 `data/storybook/nubi.json`, 그림 `assets/art/storybook/` (원본 2000px는 `tools/sprite_cleanup/src/storybook/`, 게임용은 1400px)
+- `scripts/ui/storybook.gd` (Storybook): 닫힌 천 표지 → 표지가 넘어가며 펼쳐짐 → 왼쪽 그림·오른쪽 글. 종이 결·제본선 그늘·책 옆면 종이 겹, 쪽 넘김 애니메이션, 앞뒤 면지
+  - `found_torn = false`(1회차): 14쪽 뒤 찢긴 밑동만 남은 쪽 + 뒤표지 안쪽 글 한 줄
+  - `found_torn = true`(찢긴 장을 찾은 뒤): 15·16쪽이 누렇게 바랜 종이, 접힌 자국, 찢긴 가장자리로 붙음
+  - 글자는 띄어쓰기에서만 줄이 바뀜 (낱말 중간에서 안 끊김). 글꼴 `assets/fonts/NotoSerifKR-*.otf` (OFL)
+- 타이틀의 **그림책 보기 (개발용)** / **그림책 보기 · 찢긴 장 찾음 (개발용)**
+
 ## 그림 그리기 놀이
 - `scripts/minigames/sketchbook.gd` (Sketchbook): 스케치북에 마우스로 크레용 그림. 왼쪽 끌기 그리기, 오른쪽 끌기 지우기, 크레용 12색·굵기 3단계·지우개·전부 지우기·다 그렸어
 - `color_loss = true`면 도화지와 크레용이 흑백으로 보임 (칠한 색은 그대로 저장. 색채 상실 연출)

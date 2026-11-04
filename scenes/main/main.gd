@@ -235,6 +235,15 @@ func _gallery_input(event: InputEvent) -> void:
 		_show_gallery_item()
 
 
+## 채린의 그림동화. found_torn = 2회차에 찢긴 마지막 장을 찾은 뒤
+func _open_storybook(found_torn: bool) -> void:
+	_menu.hide()
+	var book := Storybook.new()
+	book.found_torn = found_torn
+	add_child(book)
+	book.closed.connect(_show_title)
+
+
 ## 그림 그리기 놀이. 다 그리면 채린의 반응 (2회차면 붉은 속마음도)
 func _open_sketch(color_loss: bool, loop: int) -> void:
 	_menu.hide()
@@ -267,6 +276,8 @@ func _show_title() -> void:
 	_menu_button("새로 시작 (1회차)", _start_new.bind(1))
 	_menu_button("2회차로 시작 (개발용)", _start_new.bind(2))
 	_menu_button("일러스트 보기 (개발용)", _open_gallery)
+	_menu_button("그림책 보기 (개발용)", _open_storybook.bind(false))
+	_menu_button("그림책 보기 · 찢긴 장 찾음 (개발용)", _open_storybook.bind(true))
 	_menu_button("그림 그리기 (개발용)", _open_sketch.bind(false, 1))
 	_menu_button("그림 그리기 · 색 잃은 뒤 · 2회차 (개발용)", _open_sketch.bind(true, 2))
 	if SaveManager.has_slot(SaveManager.AUTO_SLOT):
