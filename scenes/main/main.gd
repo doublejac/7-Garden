@@ -274,15 +274,28 @@ func _show_title() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_menu.add_child(title)
 	_menu_button("새로 시작 (1회차)", _start_new.bind(1))
-	_menu_button("2회차로 시작 (개발용)", _start_new.bind(2))
-	_menu_button("일러스트 보기 (개발용)", _open_gallery)
-	_menu_button("그림책 보기 (개발용)", _open_storybook.bind(false))
-	_menu_button("그림책 보기 · 찢긴 장 찾음 (개발용)", _open_storybook.bind(true))
-	_menu_button("그림 그리기 (개발용)", _open_sketch.bind(false, 1))
-	_menu_button("그림 그리기 · 색 잃은 뒤 · 2회차 (개발용)", _open_sketch.bind(true, 2))
 	if SaveManager.has_slot(SaveManager.AUTO_SLOT):
 		var info := SaveManager.slot_info(SaveManager.AUTO_SLOT)
 		_menu_button("이어하기 (%d회차 %d일 차)" % [info.loop, info.day], _continue_from.bind(SaveManager.AUTO_SLOT))
+
+	# 개발용 버튼: 작게 2열로 모아서 화면 밖으로 넘치지 않게
+	var dev_label := Label.new()
+	dev_label.text = "개발용"
+	dev_label.add_theme_font_size_override("font_size", 14)
+	dev_label.modulate = Color(1, 1, 1, 0.6)
+	dev_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_menu.add_child(dev_label)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	_menu.add_child(grid)
+	_dev_button(grid, "2회차로 시작", _start_new.bind(2))
+	_dev_button(grid, "일러스트 보기", _open_gallery)
+	_dev_button(grid, "그림책 보기", _open_storybook.bind(false))
+	_dev_button(grid, "그림책 · 찢긴 장 찾음", _open_storybook.bind(true))
+	_dev_button(grid, "그림 그리기", _open_sketch.bind(false, 1))
+	_dev_button(grid, "그림 그리기 · 2회차", _open_sketch.bind(true, 2))
 	_menu.show()
 
 
@@ -319,10 +332,12 @@ func _build_ui() -> void:
 	add_child(_cg)
 
 	_menu = VBoxContainer.new()
+	# 화면 가운데 기준으로 위아래·좌우로 똑같이 늘어남 (버튼 수가 바뀌어도 가운데 유지)
 	_menu.set_anchors_preset(Control.PRESET_CENTER)
-	_menu.custom_minimum_size = Vector2(360, 0)
-	_menu.position = Vector2(-180, -120)
-	_menu.add_theme_constant_override("separation", 12)
+	_menu.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_menu.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_menu.custom_minimum_size = Vector2(420, 0)
+	_menu.add_theme_constant_override("separation", 10)
 	add_child(_menu)
 
 	_box = PanelContainer.new()
@@ -394,6 +409,16 @@ func _menu_button(label: String, cb: Callable) -> void:
 	b.custom_minimum_size = Vector2(0, 44)
 	b.pressed.connect(cb)
 	_menu.add_child(b)
+
+
+func _dev_button(parent: Control, label: String, cb: Callable) -> void:
+	var b := Button.new()
+	b.text = label
+	b.custom_minimum_size = Vector2(0, 34)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.add_theme_font_size_override("font_size", 15)
+	b.pressed.connect(cb)
+	parent.add_child(b)
 
 
 func _add_choice_button(label: String, cb: Callable) -> Button:
