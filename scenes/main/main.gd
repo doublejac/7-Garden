@@ -264,6 +264,7 @@ func _garden_color() -> Color:
 
 func _build_ui() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE   # 화면 클릭이 _unhandled_input까지 오게 (대사 넘기기·일러스트 넘기기)
 	_bg = ColorRect.new()
 	_bg.color = _garden_color()
 	_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
