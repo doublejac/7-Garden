@@ -4,6 +4,7 @@
 # 일러스트: 대사 줄의 fx에 cg:<파일 이름> 이면 assets/art/cg/<이름>.jpg를 띄우고, cg_off 면 내림
 # 그림책: fx에 book:<시작>-<끝> (예: book:3-4) 이면 그 줄을 보여 준 뒤, 다음 클릭에 채린에게 그 쪽들을 읽어 줌.
 #         책을 덮으면 다음 대사로 이어짐. 밤마다 읽을 쪽은 data/storybook/nubi.json의 nights
+# 캡슐 숨기기: fx에 capsule 이면 그 줄 다음 클릭에 미니게임. 결과 수치(CapsuleTrick.RESULT_STATS)를 적용하고 다음 대사로
 extends Control
 
 const LAST_WRITTEN_DAY := 4   # 대사를 작성한 마지막 일차
@@ -22,6 +23,7 @@ var _sketch: Sketchbook
 var _after_sketch := false   # 그림 놀이 뒤 채린 반응을 보여 주는 중 (클릭하면 타이틀로)
 var _pending_book := ""      # 다음 클릭에 펼칠 그림책 쪽 범위 ("3-4")
 var _book_open := false
+var _pending_capsule := false
 var _fx: ColorRect
 var _debug: Label
 var _box: PanelContainer
@@ -143,6 +145,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	var advance: bool = event.is_action_pressed("ui_accept") \
 			or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT)
 	if advance:
+		if _pending_capsule:
+			_pending_capsule = false
+			_play_capsule(func(): runner.next())
+			return
 		if _pending_book != "":
 			var r := _pending_book.split("-")
 			_pending_book = ""
@@ -155,6 +161,8 @@ func _play_fx(key: String) -> void:
 	# 연출은 아직 자리만 잡아둔 상태. 화면 효과 외에는 디버그 표시줄에 키만 띄운다.
 	if key.begins_with("cg:"):
 		_show_cg(key.substr(3))
+	if key == "capsule":
+		_pending_capsule = true
 	if key.begins_with("book:"):
 		_pending_book = key.substr(5)
 	match key:
@@ -280,6 +288,22 @@ func _read_book(from: int, to: int, inner: bool, dev_reveal: bool, after: Callab
 		after.call())
 
 
+## 캡슐 숨기기 미니게임. 의심도가 높을수록 원장이 눈을 짧게 돌림
+func _play_capsule(after: Callable) -> void:
+	_book_open = true
+	_box.hide()
+	_menu.hide()
+	var g := CapsuleTrick.new()
+	g.difficulty = clampf(0.2 + GameState.suspicion / 100.0, 0.0, 1.0)
+	add_child(g)
+	g.finished.connect(func(result: String):
+		GameState.apply_stat_string(CapsuleTrick.RESULT_STATS[result])
+		_book_open = false
+		_box.show()
+		_refresh_debug()
+		after.call())
+
+
 ## 그림 그리기 놀이. 다 그리면 채린의 반응 (2회차면 붉은 속마음도)
 func _open_sketch(color_loss: bool, loop: int) -> void:
 	_menu.hide()
@@ -332,6 +356,7 @@ func _show_title() -> void:
 	_dev_button(grid, "그림책 · 찢긴 장 찾음", _open_storybook.bind(true))
 	_dev_button(grid, "읽어 주기 · 첫날 밤 (1~2쪽)", func(): _read_book(1, 2, false, true, _show_title))
 	_dev_button(grid, "읽어 주기 · 2회차 (5~6쪽)", func(): _read_book(5, 6, true, true, _show_title))
+	_dev_button(grid, "캡슐 숨기기 (2회차 투약)", func(): _play_capsule(_show_title))
 	_dev_button(grid, "그림 그리기", _open_sketch.bind(false, 1))
 	_dev_button(grid, "그림 그리기 · 2회차", _open_sketch.bind(true, 2))
 	_menu.show()
