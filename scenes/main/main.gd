@@ -1,13 +1,21 @@
 # main.gd
 # 개발용 대사 재생기. 그림 없이 1~4일 차 대사를 텍스트로 돌려보며 분기와 수치를 확인한다.
 # 클릭 / 스페이스 / 엔터: 다음 줄   F1: 디버그 수치 표시 켜고 끄기
+# 일러스트: 대사 줄의 fx에 cg:<파일 이름> 이면 assets/art/cg/<이름>.jpg를 띄우고, cg_off 면 내림
 extends Control
 
 const LAST_WRITTEN_DAY := 4   # 대사를 작성한 마지막 일차
+const CG_DIR := "res://assets/art/cg/"
+const CG_FADE := 0.6
 
 var runner := DialogueRunner.new()
 
 var _bg: ColorRect
+var _cg: TextureRect
+var _cg_tween: Tween
+var _gallery: PackedStringArray = []   # 일러스트 보기(개발용)에서 넘겨 볼 이름들
+var _gallery_i := -1
+var _gallery_label: Label
 var _fx: ColorRect
 var _debug: Label
 var _box: PanelContainer
@@ -49,6 +57,7 @@ func _continue_from(slot: int) -> void:
 
 func _begin_day(day: int, play_now: bool) -> void:
 	_ending_shown = false
+	_hide_cg(false)
 	GameState.day = day
 	GameState.scene_id = "D%d_S00" % day
 	_apply_day_fx()
@@ -110,6 +119,9 @@ func _on_choices(choices: Array) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _gallery_i >= 0:
+		_gallery_input(event)
+		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
 		_debug.visible = not _debug.visible
 		return
@@ -123,7 +135,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _play_fx(key: String) -> void:
 	# 연출은 아직 자리만 잡아둔 상태. 화면 효과 외에는 디버그 표시줄에 키만 띄운다.
+	if key.begins_with("cg:"):
+		_show_cg(key.substr(3))
 	match key:
+		"cg_off":
+			_hide_cg()
 		"saturation_down":
 			pass  # 일차별 채도는 _apply_day_fx에서 적용
 		"glitch_short", "noise_short":
@@ -146,7 +162,74 @@ func _refresh_debug() -> void:
 		GameState.clarity, GameState.pills_skipped, GameState.scene_id]
 
 
+# --- 일러스트 ------------------------------------------------------------------
+
+func _show_cg(cg_name: String, animate := true) -> void:
+	var path := CG_DIR + cg_name + ".jpg"
+	if not ResourceLoader.exists(path):
+		push_warning("일러스트 없음: " + path)
+		return
+	_cg.texture = load(path)
+	_cg.show()
+	if _cg_tween:
+		_cg_tween.kill()
+	if animate:
+		_cg.modulate.a = 0.0
+		_cg_tween = create_tween()
+		_cg_tween.tween_property(_cg, "modulate:a", 1.0, CG_FADE)
+	else:
+		_cg.modulate.a = 1.0
+
+
+func _hide_cg(animate := true) -> void:
+	if _cg_tween:
+		_cg_tween.kill()
+	if not animate or not _cg.visible:
+		_cg.hide()
+		return
+	_cg_tween = create_tween()
+	_cg_tween.tween_property(_cg, "modulate:a", 0.0, CG_FADE)
+	_cg_tween.tween_callback(_cg.hide)
+
+
+## 개발용: assets/art/cg의 일러스트를 하나씩 넘겨 봄. 클릭·스페이스 다음, Esc·오른쪽 클릭 타이틀로
+func _open_gallery() -> void:
+	_gallery = PackedStringArray()
+	for f in DirAccess.get_files_at(CG_DIR):
+		f = f.trim_suffix(".import")
+		if f.ends_with(".jpg") and not _gallery.has(f.get_basename()):
+			_gallery.append(f.get_basename())
+	_gallery.sort()
+	if _gallery.is_empty():
+		return
+	_menu.hide()
+	_gallery_i = 0
+	_gallery_label.show()
+	_show_gallery_item()
+
+
+func _show_gallery_item() -> void:
+	_show_cg(_gallery[_gallery_i])
+	_gallery_label.text = "%s   (%d / %d)   클릭: 다음 · Esc: 타이틀" % [_gallery[_gallery_i], _gallery_i + 1, _gallery.size()]
+
+
+func _gallery_input(event: InputEvent) -> void:
+	var back: bool = event.is_action_pressed("ui_cancel") \
+			or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT)
+	var advance: bool = event.is_action_pressed("ui_accept") \
+			or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT)
+	if back or (advance and _gallery_i == _gallery.size() - 1):
+		_gallery_i = -1
+		_gallery_label.hide()
+		_hide_cg(false)
+		_show_title()
+	elif advance:
+		_gallery_i += 1
+		_show_gallery_item()
+
+
 func _show_title() -> void:
+	_hide_cg(false)
 	_box.hide()
 	_clear_choices()
 	for c in _menu.get_children():
@@ -158,6 +241,7 @@ func _show_title() -> void:
 	_menu.add_child(title)
 	_menu_button("새로 시작 (1회차)", _start_new.bind(1))
 	_menu_button("2회차로 시작 (개발용)", _start_new.bind(2))
+	_menu_button("일러스트 보기 (개발용)", _open_gallery)
 	if SaveManager.has_slot(SaveManager.AUTO_SLOT):
 		var info := SaveManager.slot_info(SaveManager.AUTO_SLOT)
 		_menu_button("이어하기 (%d회차 %d일 차)" % [info.loop, info.day], _continue_from.bind(SaveManager.AUTO_SLOT))
@@ -186,6 +270,15 @@ func _build_ui() -> void:
 	_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_bg)
 
+	# 일러스트: 배경 위, 대사 상자 아래. 화면을 꽉 채우고 넘치는 부분은 잘라냄
+	_cg = TextureRect.new()
+	_cg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_cg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_cg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_cg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cg.hide()
+	add_child(_cg)
+
 	_menu = VBoxContainer.new()
 	_menu.set_anchors_preset(Control.PRESET_CENTER)
 	_menu.custom_minimum_size = Vector2(360, 0)
@@ -195,7 +288,8 @@ func _build_ui() -> void:
 
 	_box = PanelContainer.new()
 	_box.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_box.offset_top = -260
+	_box.offset_top = -170           # 대사 두세 줄 높이. 선택지가 많으면 위로 늘어남 (일러스트를 덜 가리게)
+	_box.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_box.offset_left = 40
 	_box.offset_right = -40
 	_box.offset_bottom = -30
@@ -235,6 +329,13 @@ func _build_ui() -> void:
 	_debug.add_theme_color_override("font_outline_color", Color.BLACK)
 	_debug.add_theme_constant_override("outline_size", 4)
 	debug_layer.add_child(_debug)
+	_gallery_label = Label.new()
+	_gallery_label.position = Vector2(12, 40)
+	_gallery_label.add_theme_color_override("font_color", Color.WHITE)
+	_gallery_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_gallery_label.add_theme_constant_override("outline_size", 4)
+	_gallery_label.hide()
+	debug_layer.add_child(_gallery_label)
 
 
 func _rich(size: int) -> RichTextLabel:
