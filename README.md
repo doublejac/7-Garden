@@ -1,5 +1,7 @@
 # 해무장 (Godot 4.7 프로젝트)
 
+> 시스템 설계서 (최종본, 앞으로 바뀌는 설정은 여기에 반영): [구글 문서 「완전한 작별을 위한 정원 — 시스템 설계서 최종본」](https://docs.google.com/document/d/1JD9Y2g0wYH64W0j8GlLbQTZPz5DDTDum7eI_Ed6r3Qw/edit)
+
 ## 여는 법
 1. Godot **4.7.2 Standard** 버전을 설치합니다. (.NET 버전 아님)
 2. Godot 프로젝트 관리자에서 **가져오기**를 누르고 이 폴더의 `project.godot`을 선택합니다.
