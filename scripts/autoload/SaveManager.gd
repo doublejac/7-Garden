@@ -22,6 +22,7 @@ var meta: Dictionary = {
 	"endings_seen": [],     # ["ending_1", "early", ...]
 	"inner_text": false,    # 붉은 속마음 해금 (회차를 넘어 유지)
 	"seen_lines": {},       # 대사 ID -> true. 이미 본 대사 스킵용
+	"book_seen": {},        # 그림책 쪽 번호("1"~"16") -> true. 처음 읽는 쪽만 글이 천천히 나타남
 }
 
 
@@ -129,6 +130,16 @@ func mark_line_seen(line_id: String) -> void:
 
 func is_line_seen(line_id: String) -> bool:
 	return meta.seen_lines.has(line_id)
+
+
+func mark_book_page_seen(page: int) -> void:
+	if not meta.book_seen.has(str(page)):
+		meta.book_seen[str(page)] = true
+		_save_meta()
+
+
+func is_book_page_seen(page: int) -> bool:
+	return meta.book_seen.has(str(page))
 
 
 func _load_meta() -> void:

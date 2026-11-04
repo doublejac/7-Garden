@@ -5,6 +5,12 @@
 # 1회차(found_torn = false): 14쪽 다음은 제본선에 찢긴 자국만 남은 쪽 + 뒤표지 안쪽 글 한 줄
 # 찢긴 장을 찾은 뒤(found_torn = true): 15·16쪽이 접혔던 자국과 찢긴 가장자리가 있는 누런 종이로 붙음
 # 글·그림: data/storybook/nubi.json, assets/art/storybook/<이름>.jpg
+#
+# 밤에 읽어 주기 (page_from·page_to > 0): 그날 읽을 쪽만 펼쳐짐
+#   page_from > 1이면 표지 아래로 가름끈이 나와 있고, 펼치면 가름끈 꽂힌 쪽부터 시작
+#   page_to 쪽을 다 읽고 넘기면 책을 덮음 (오늘은 여기까지)
+#   reactions = true면 책이 조금 위로 물러나고 아래에 채린의 반응 한마디 (show_inner면 붉은 속마음도)
+# 처음 읽는 쪽(SaveManager.meta.book_seen에 없는 쪽)은 글이 천천히 나타남. 클릭하면 바로 다 보임
 class_name Storybook
 extends Control
 
@@ -24,6 +30,17 @@ const INK := Color("#3b342e")
 const SHELL := Color("#e8743b")
 
 @export var found_torn := false
+@export var page_from := 0             # 0 = 처음부터 (표지 → 면지·속표지)
+@export var page_to := 0               # 0 = 끝까지
+@export var reactions := false         # 채린에게 읽어 주는 중 (반응 대사)
+@export var show_inner := false        # 반응 아래 붉은 속마음
+@export var always_reveal := false      # 개발용: 읽은 쪽도 글이 천천히 나타나게
+
+const REVEAL_CPS := 26.0               # 처음 읽을 때 글 나타나는 속도 (글자/초)
+const RIBBON := Color("#8e4a3a")       # 가름끈 (바랜 주홍)
+const READ_SCALE := 0.84               # 반응 대사 자리를 내려고 책을 줄이는 비율
+
+var furthest := 0                      # 이번에 글을 끝까지 본 마지막 쪽 번호
 
 var data: Dictionary
 var spreads: Array = []                 # [[왼쪽 쪽, 오른쪽 쪽], ...]  각 쪽 = {kind, ...}
@@ -41,6 +58,16 @@ var _right_slot: Control
 var _anim: Control
 var _cover: Control
 var _hint: Label
+var _lo := 0                            # 넘길 수 있는 펼침면 범위
+var _hi := 0
+var _ribbon: Control
+var _reveal: Tween
+var _reveal_body: RichTextLabel
+var _reveal_page := 0
+var _react_box: PanelContainer
+var _react_text: Label
+var _react_inner: Label
+var _react_tween: Tween
 
 
 func _ready() -> void:
@@ -59,18 +86,27 @@ func _ready() -> void:
 func _build_spreads() -> void:
 	spreads.append([{"kind": "endpaper"}, {"kind": "title"}])
 	var n := 0
-	for p in data["pages"]:
+	var last_story := 0
+	for i in data["pages"].size():
+		var p: Dictionary = data["pages"][i]
 		if p.get("torn", false) and not found_torn:
 			continue
 		n += 1
+		last_story = i + 1
 		var torn: bool = p.get("torn", false)
 		spreads.append([
 			{"kind": "image", "image": p["image"], "num": n * 2, "torn": torn},
-			{"kind": "text", "text": p["text"], "num": n * 2 + 1, "torn": torn}])
+			{"kind": "text", "text": p["text"], "num": n * 2 + 1, "torn": torn, "page": i + 1,
+				"react": p.get("react", ""), "react_inner": p.get("react_inner", "")}])
 	if found_torn:
 		spreads.append([{"kind": "endpaper"}, {"kind": "back"}])
 	else:
 		spreads.append([{"kind": "stub"}, {"kind": "back"}])
+	# 쪽 번호 k(1~16)의 펼침면은 spreads[k] (찢긴 장이 빠져도 앞 14쪽은 그대로)
+	_lo = clampi(page_from, 0, last_story) if page_from > 1 else 0
+	_hi = spreads.size() - 1
+	if page_to > 0 and page_to < last_story:
+		_hi = page_to
 
 
 # ── 화면 ──────────────────────────────────────────────────
@@ -121,16 +157,26 @@ func _build_scene() -> void:
 	_left_slot.visible = false
 	gutter.visible = false
 	gutter.set_meta("gutter", true)
+	_ribbon = Control.new()                         # 가름끈: 오늘 읽기 시작하는 쪽 제본선에 끼워 둔 끈
+	_ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ribbon.draw.connect(_draw_ribbon)
+	_ribbon.visible = false
+	_book.add_child(_ribbon)
 	_cover = _make_cover()
 	_book.add_child(_cover)
-	_set_spread_content(0)
+	_set_spread_content(_lo)
+	if reactions:
+		_book.pivot_offset = Vector2(SPINE_X, 0)
+		_book.scale = Vector2.ONE * READ_SCALE
+		_book.position.y = 8
+		_build_reaction_box()
 
 	_hint = Label.new()
 	_hint.text = "클릭: 넘기기 · 오른쪽 클릭: 앞으로 · Esc: 덮기"
 	_hint.add_theme_font_override("font", font)
 	_hint.add_theme_font_size_override("font_size", 15)
 	_hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.45))
-	_hint.position = Vector2(0, 694)
+	_hint.position = Vector2(0, 4 if reactions else 694)
 	_hint.size = Vector2(1280, 20)
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(_hint)
@@ -219,6 +265,8 @@ func _make_page(spec: Dictionary, side: int) -> Control:
 			page.add_child(img)
 		"text":
 			_add_text_page(page, spec["text"])
+			if _needs_reveal(spec.get("page", 0)):
+				_body_of(page).visible_ratio = 0.0
 		"title":
 			_add_title_page(page)
 		"endpaper":
@@ -294,6 +342,8 @@ func _add_text_page(page: Control, text: String) -> void:
 	body.add_theme_color_override("default_color", INK)
 	body.add_theme_constant_override("line_separation", 11)
 	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
+	body.set_meta("story_body", true)
 	box.add_child(body)
 	box.add_child(_ornament(true))
 
@@ -471,6 +521,17 @@ func _make_cover() -> Control:
 	cover.size = Vector2(PAGE.x + BOARD_PAD, PAGE.y + BOARD_PAD * 2)
 	cover.pivot_offset = Vector2(0, cover.size.y / 2.0)
 	cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _lo > 0:                     # 덮인 책 아래로 삐져나온 가름끈 끝
+		var tail := Control.new()
+		tail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tail.draw.connect(func():
+			var x := 120.0
+			var y0 := cover.size.y - 20.0
+			var pts := PackedVector2Array([Vector2(x, y0), Vector2(x + 14, y0), Vector2(x + 16, y0 + 46),
+				Vector2(x + 8, y0 + 38), Vector2(x + 1, y0 + 47)])
+			tail.draw_colored_polygon(pts, RIBBON)
+			tail.draw_line(Vector2(x + 7, y0), Vector2(x + 8, y0 + 38), Color(0, 0, 0, 0.18), 1.0))
+		cover.add_child(tail)
 	var cloth := Panel.new()
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = CLOTH
@@ -565,24 +626,32 @@ func _unhandled_input(event: InputEvent) -> void:
 func next_page() -> void:
 	if busy:
 		return
-	if index < 0:
+	if _reveal:
+		_finish_reveal()
+	elif index < 0:
 		_open_cover()
-	elif index < spreads.size() - 1:
+	elif index < _hi:
 		_turn(1)
 	else:
 		close_book()
 
 
 func prev_page() -> void:
-	if busy or index <= 0:
+	if busy:
 		return
-	_turn(-1)
+	if _reveal:
+		_finish_reveal()
+	elif index > _lo:
+		_turn(-1)
 
 
 func close_book() -> void:
 	if busy:
 		return
 	busy = true
+	if _reveal:
+		_reveal.kill()
+		_reveal = null
 	var t := create_tween()
 	t.tween_property(self, "modulate:a", 0.0, 0.35)
 	t.tween_callback(func():
@@ -592,7 +661,7 @@ func close_book() -> void:
 
 func _open_cover() -> void:
 	busy = true
-	var inside := _make_page(spreads[0][0], -1)
+	var inside := _make_page(spreads[_lo][0], -1)
 	inside.position = Vector2(SPINE_X - PAGE.x, TOP)
 	inside.pivot_offset = Vector2(PAGE.x, PAGE.y / 2.0)
 	inside.scale.x = 0.0
@@ -614,14 +683,18 @@ func _open_cover() -> void:
 		for c in _book.get_children():
 			if c.has_meta("gutter"):
 				c.visible = true
-		index = 0
+		index = _lo
+		_ribbon.visible = _lo > 0
 		_stacks.queue_redraw()
-		busy = false)
+		busy = false
+		_arrive())
 
 
 ## dir 1: 오른쪽 쪽이 제본선을 축으로 넘어가 왼쪽에 내려앉음. dir -1은 그 반대
 func _turn(dir: int) -> void:
 	busy = true
+	_ribbon.visible = false
+	_hide_reaction()
 	var cur: Array = spreads[index]
 	var nxt: Array = spreads[index + dir]
 	var from_side := 1 if dir > 0 else -1
@@ -666,4 +739,150 @@ func _turn(dir: int) -> void:
 		shadow.queue_free()
 		index += dir
 		_stacks.queue_redraw()
-		busy = false)
+		busy = false
+		_arrive())
+
+
+# ── 읽기: 처음 읽는 쪽은 글이 천천히, 다 읽으면 채린의 반응 ─────────────
+var _revealed := {}                     # always_reveal일 때 이번에 이미 다 본 쪽
+
+
+func _needs_reveal(k: int) -> bool:
+	if k <= 0 or _revealed.has(k):
+		return false
+	return always_reveal or not SaveManager.is_book_page_seen(k)
+
+
+func _body_of(n: Node) -> RichTextLabel:
+	for c in n.get_children():
+		if c.is_queued_for_deletion():
+			continue
+		if c.has_meta("story_body"):
+			return c
+		var r := _body_of(c)
+		if r:
+			return r
+	return null
+
+
+func _arrive() -> void:
+	var spec: Dictionary = spreads[index][1]
+	if spec.get("kind") != "text":
+		_update_hint()
+		return
+	var body := _body_of(_right_slot)
+	if body and body.visible_ratio < 1.0:
+		_reveal_body = body
+		_reveal_page = spec["page"]
+		_reveal = create_tween()
+		_reveal.tween_property(body, "visible_ratio", 1.0, String(spec["text"]).length() / REVEAL_CPS)
+		_reveal.tween_callback(_finish_reveal)
+		_update_hint()
+	else:
+		_page_done(spec)
+
+
+func _finish_reveal() -> void:
+	if _reveal:
+		_reveal.kill()
+	_reveal = null
+	if is_instance_valid(_reveal_body):
+		_reveal_body.visible_ratio = 1.0
+	_revealed[_reveal_page] = true
+	_page_done(spreads[index][1])
+
+
+func _page_done(spec: Dictionary) -> void:
+	var k: int = spec["page"]
+	SaveManager.mark_book_page_seen(k)
+	furthest = maxi(furthest, k)
+	_update_hint()
+	if reactions:
+		_show_reaction(spec)
+
+
+func _update_hint() -> void:
+	if _reveal:
+		_hint.text = "클릭: 글 다 보기"
+	elif index >= _hi and page_to > 0:
+		_hint.text = "클릭: 오늘은 여기까지 · 덮기"
+	else:
+		_hint.text = "클릭: 넘기기 · 오른쪽 클릭: 앞으로 · Esc: 덮기"
+
+
+## 가름끈: 펼친 쪽 제본선 골을 따라 내려와 책 아래로 살짝 늘어짐 (그림을 가리지 않게)
+func _draw_ribbon() -> void:
+	var a := Vector2(SPINE_X - 5, TOP - 4)
+	var b := Vector2(SPINE_X - 9, TOP + PAGE.y * 0.7)
+	var c := Vector2(SPINE_X - 34, TOP + PAGE.y + 46)
+	var pts := PackedVector2Array()
+	for i in 25:
+		var t := i / 24.0
+		pts.append(a.lerp(b, t).lerp(b.lerp(c, t), t))
+	_ribbon.draw_polyline(pts.duplicate(), Color(0, 0, 0, 0.2), 12.0)        # 종이 위에 지는 그늘
+	for i in pts.size():
+		pts[i] += Vector2(-2, -1)
+	_ribbon.draw_polyline(pts, RIBBON, 10.0)
+	_ribbon.draw_polyline(pts, RIBBON.lightened(0.18), 2.0)                   # 끈의 결
+	var end := pts[pts.size() - 1]                                          # 끝은 제비꼬리로 자름
+	var dir := (end - pts[pts.size() - 2]).normalized()
+	var nrm := Vector2(-dir.y, dir.x) * 5.0
+	_ribbon.draw_colored_polygon(PackedVector2Array([end + nrm, end - nrm, end - nrm + dir * 10, end - dir * 0.5 + dir * 3, end + nrm + dir * 10]), RIBBON)
+
+
+func _build_reaction_box() -> void:
+	_react_box = PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.06, 0.06, 0.07, 0.86)
+	sb.set_corner_radius_all(8)
+	sb.content_margin_left = 22
+	sb.content_margin_right = 22
+	sb.content_margin_top = 12
+	sb.content_margin_bottom = 14
+	_react_box.add_theme_stylebox_override("panel", sb)
+	_react_box.position = Vector2(170, 600)
+	_react_box.size = Vector2(940, 0)
+	_react_box.custom_minimum_size = Vector2(940, 0)
+	_react_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_react_box)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 4)
+	_react_box.add_child(v)
+	var who := Label.new()
+	who.text = "유채린"
+	who.add_theme_font_size_override("font_size", 17)
+	who.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	v.add_child(who)
+	_react_text = Label.new()
+	_react_text.add_theme_font_size_override("font_size", 21)
+	_react_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(_react_text)
+	_react_inner = Label.new()
+	_react_inner.add_theme_font_size_override("font_size", 18)
+	_react_inner.add_theme_color_override("font_color", Color("#ff5a5a"))
+	_react_inner.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(_react_inner)
+	_react_box.modulate.a = 0.0
+
+
+func _show_reaction(spec: Dictionary) -> void:
+	var say: String = spec.get("react", "")
+	if say == "" or _react_box == null:
+		return
+	_react_text.text = _keep_words(say)
+	var inner: String = spec.get("react_inner", "")
+	_react_inner.text = _keep_words(inner)
+	_react_inner.visible = show_inner and inner != ""
+	if _react_tween:
+		_react_tween.kill()
+	_react_tween = create_tween()
+	_react_tween.tween_interval(0.35)
+	_react_tween.tween_property(_react_box, "modulate:a", 1.0, 0.4)
+
+
+func _hide_reaction() -> void:
+	if _react_box:
+		if _react_tween:
+			_react_tween.kill()
+		_react_tween = create_tween()
+		_react_tween.tween_property(_react_box, "modulate:a", 0.0, 0.15)

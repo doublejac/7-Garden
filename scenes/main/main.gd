@@ -2,6 +2,8 @@
 # 개발용 대사 재생기. 그림 없이 1~4일 차 대사를 텍스트로 돌려보며 분기와 수치를 확인한다.
 # 클릭 / 스페이스 / 엔터: 다음 줄   F1: 디버그 수치 표시 켜고 끄기
 # 일러스트: 대사 줄의 fx에 cg:<파일 이름> 이면 assets/art/cg/<이름>.jpg를 띄우고, cg_off 면 내림
+# 그림책: fx에 book:<시작>-<끝> (예: book:3-4) 이면 그 줄을 보여 준 뒤, 다음 클릭에 채린에게 그 쪽들을 읽어 줌.
+#         책을 덮으면 다음 대사로 이어짐. 밤마다 읽을 쪽은 data/storybook/nubi.json의 nights
 extends Control
 
 const LAST_WRITTEN_DAY := 4   # 대사를 작성한 마지막 일차
@@ -18,6 +20,8 @@ var _gallery_i := -1
 var _gallery_label: Label
 var _sketch: Sketchbook
 var _after_sketch := false   # 그림 놀이 뒤 채린 반응을 보여 주는 중 (클릭하면 타이틀로)
+var _pending_book := ""      # 다음 클릭에 펼칠 그림책 쪽 범위 ("3-4")
+var _book_open := false
 var _fx: ColorRect
 var _debug: Label
 var _box: PanelContainer
@@ -121,6 +125,8 @@ func _on_choices(choices: Array) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _book_open:
+		return
 	if _gallery_i >= 0:
 		_gallery_input(event)
 		return
@@ -137,6 +143,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	var advance: bool = event.is_action_pressed("ui_accept") \
 			or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT)
 	if advance:
+		if _pending_book != "":
+			var r := _pending_book.split("-")
+			_pending_book = ""
+			_read_book(int(r[0]), int(r[r.size() - 1]), GameState.flags.get("inner_text", false), false, func(): runner.next())
+			return
 		runner.next()
 
 
@@ -144,6 +155,8 @@ func _play_fx(key: String) -> void:
 	# 연출은 아직 자리만 잡아둔 상태. 화면 효과 외에는 디버그 표시줄에 키만 띄운다.
 	if key.begins_with("cg:"):
 		_show_cg(key.substr(3))
+	if key.begins_with("book:"):
+		_pending_book = key.substr(5)
 	match key:
 		"cg_off":
 			_hide_cg()
@@ -238,10 +251,33 @@ func _gallery_input(event: InputEvent) -> void:
 ## 채린의 그림동화. found_torn = 2회차에 찢긴 마지막 장을 찾은 뒤
 func _open_storybook(found_torn: bool) -> void:
 	_menu.hide()
+	_book_open = true
 	var book := Storybook.new()
 	book.found_torn = found_torn
 	add_child(book)
-	book.closed.connect(_show_title)
+	book.closed.connect(func():
+		_book_open = false
+		_show_title())
+
+
+## 채린에게 그림책 읽어 주기: from~to 쪽만. 덮으면 읽은 데까지 기록하고 after 호출
+func _read_book(from: int, to: int, inner: bool, dev_reveal: bool, after: Callable) -> void:
+	_book_open = true
+	_box.hide()
+	_menu.hide()
+	var book := Storybook.new()
+	book.found_torn = GameState.flags.get("found_torn", false)
+	book.page_from = from
+	book.page_to = to
+	book.reactions = true
+	book.show_inner = inner
+	book.always_reveal = dev_reveal
+	add_child(book)
+	book.closed.connect(func():
+		GameState.book_read = maxi(GameState.book_read, book.furthest)
+		_book_open = false
+		_box.show()
+		after.call())
 
 
 ## 그림 그리기 놀이. 다 그리면 채린의 반응 (2회차면 붉은 속마음도)
@@ -294,6 +330,8 @@ func _show_title() -> void:
 	_dev_button(grid, "일러스트 보기", _open_gallery)
 	_dev_button(grid, "그림책 보기", _open_storybook.bind(false))
 	_dev_button(grid, "그림책 · 찢긴 장 찾음", _open_storybook.bind(true))
+	_dev_button(grid, "읽어 주기 · 첫날 밤 (1~2쪽)", func(): _read_book(1, 2, false, true, _show_title))
+	_dev_button(grid, "읽어 주기 · 2회차 (5~6쪽)", func(): _read_book(5, 6, true, true, _show_title))
 	_dev_button(grid, "그림 그리기", _open_sketch.bind(false, 1))
 	_dev_button(grid, "그림 그리기 · 2회차", _open_sketch.bind(true, 2))
 	_menu.show()

@@ -17,10 +17,12 @@ var peace := START_PEACE      # 평온도 (공개)
 var suspicion := 0            # 의심도 (숨김)
 var clarity := START_CLARITY  # 자아 회복도 (숨김)
 var pills_skipped := 0        # 약 거부 횟수
+var book_read := 0            # 이번 회차에 채린에게 읽어 준 그림책 마지막 쪽 (서재에서 다시 볼 수 있는 데까지)
 
 const FLAG_NAMES := [
 	"found_capsule", "lie_choice", "read_floor_message", "found_archive",
 	"inner_text", "park_ally", "reverse_engineered", "glass_shard",
+	"found_torn",   # 그림책의 찢긴 마지막 장(15·16쪽)을 찾음
 ]
 var flags: Dictionary = {}
 var _ending_fired := false   # 즉시 엔딩 신호를 한 번만 보내기 위한 잠금
@@ -39,6 +41,7 @@ func reset_run(keep_inner_text: bool) -> void:
 	suspicion = 0
 	clarity = START_CLARITY
 	pills_skipped = 0
+	book_read = 0
 	flags.clear()
 	for f in FLAG_NAMES:
 		flags[f] = false
@@ -103,6 +106,7 @@ func to_dict() -> Dictionary:
 		"suspicion": suspicion,
 		"clarity": clarity,
 		"pills_skipped": pills_skipped,
+		"book_read": book_read,
 		"flags": flags.duplicate(),
 	}
 
@@ -116,6 +120,7 @@ func from_dict(d: Dictionary) -> void:
 	suspicion = d.get("suspicion", 0)
 	clarity = d.get("clarity", START_CLARITY)
 	pills_skipped = d.get("pills_skipped", 0)
+	book_read = d.get("book_read", 0)
 	var saved_flags: Dictionary = d.get("flags", {})
 	for f in FLAG_NAMES:
 		flags[f] = saved_flags.get(f, false)
