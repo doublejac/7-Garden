@@ -1,6 +1,6 @@
 {
  "name": "본관 1층",
- "floors_note": ". 마루 : 마루변형 , 세로복도 _ 가로복도 L 로비 F 식당 K 회색타일 B 욕실",
+ "floors_note": ". 마루 : 마루변형 , 세로복도 _ 가로복도 L 로비 F 식당 K 회색타일 B 화장실",
  "corridor": "floral",
  "spawn": [
   5.0,
@@ -11,10 +11,10 @@
   "#WWWWWWWW#WWW#WWWWWWWW##WWWWWWWWWWWWWWWWW#WWWWWWW#######",
   "#WWWWWWWW#WWW#WWWWWWWW##WWWWWWWWWWWWWWWWW#WWWWWWW#######",
   "#WWWWWWWW#WWW#WWWWWWWW##WWWWWWWWWWWWWWWWW#WWWWWWW#######",
-  "#.....#BB#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
-  "#.....#BB#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
-  "#.....#BB#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
-  "#.....#..#,,,:::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
+  "#........#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
+  "#........#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
+  "#........#,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
+  "#........#,,,:::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
   "#.........,,,:::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
   "#.........,,,#::::::::##FFFFFFFFFFFFFFFFF#KKKKKKK#######",
   "##########,,,###########FFFFFFFFFFFFFFFFFKKKKKKKK#######",
@@ -34,16 +34,16 @@
   "#______________________________________________________#",
   "#______________________________________________________#",
   "#______________________________________________________#",
-  "##########::#######KK####LLLLLLLLLLLLLLLLL##############",
-  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL##############",
-  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL##############",
-  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL##############",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL##############",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL##############",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL##############",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL##############",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL##############",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL##############",
+  "##########::#######KK####LLLLLLLLLLLLLLLLL###BB#########",
+  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#WWBBWWW######",
+  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#WWBBWWW######",
+  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#WWBBWWW######",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
   "#################################LL#####################"
  ],
  "props": [
@@ -111,37 +111,6 @@
     8.5,
     1.3,
     0.5
-   ],
-   false
-  ],
-  [
-   "bath_mirror",
-   7.5,
-   3.1,
-   [],
-   true
-  ],
-  [
-   "bath_sink",
-   7.5,
-   4.9,
-   [
-    7.1,
-    4,
-    0.8,
-    0.9
-   ],
-   false
-  ],
-  [
-   "toilet",
-   8.5,
-   5.0,
-   [
-    8.1,
-    4,
-    0.8,
-    1.0
    ],
    false
   ],
@@ -806,6 +775,99 @@
    36.9,
    [],
    true
+  ],
+  [
+   "mirror",
+   7.5,
+   3.2,
+   [],
+   true
+  ],
+  [
+   "desk",
+   7.4,
+   5.2,
+   [
+    6.6,
+    4.3,
+    1.6,
+    0.9
+   ],
+   false
+  ],
+  [
+   "bath_mirror",
+   43.5,
+   30.1,
+   [],
+   true
+  ],
+  [
+   "bath_mirror",
+   44.5,
+   30.1,
+   [],
+   true
+  ],
+  [
+   "bath_sink",
+   43.5,
+   31.9,
+   [
+    43.1,
+    31,
+    0.8,
+    0.9
+   ],
+   false
+  ],
+  [
+   "bath_sink",
+   44.5,
+   31.9,
+   [
+    44.1,
+    31,
+    0.8,
+    0.9
+   ],
+   false
+  ],
+  [
+   "toilet",
+   47.7,
+   32.0,
+   [
+    47.3,
+    31,
+    0.8,
+    1.0
+   ],
+   false
+  ],
+  [
+   "toilet",
+   49.2,
+   32.0,
+   [
+    48.8,
+    31,
+    0.8,
+    1.0
+   ],
+   false
+  ],
+  [
+   "plant",
+   43.6,
+   36.9,
+   [
+    43.2,
+    36.3,
+    0.8,
+    0.6
+   ],
+   false
   ]
  ],
  "doors": [
@@ -871,6 +933,12 @@
    "y": 37,
    "type": "h",
    "swing": -1
+  },
+  {
+   "x": 45,
+   "y": 27,
+   "type": "h",
+   "swing": 1
   }
  ],
  "labels": [
@@ -940,9 +1008,9 @@
    24.4
   ],
   [
-   "욕실",
-   7.6,
-   6.5
+   "화장실",
+   46.5,
+   36.4
   ]
  ],
  "moonlights": [
@@ -977,8 +1045,23 @@
    2.6
   ]
  ],
-  "interact": [{"id": "book_drawer", "name": "협탁 서랍", "x": 3.5, "y": 5.4, "range": 1.7}],
-  "npcs": [
-    {"id": "doyun", "name": "도윤", "scene": "res://scenes/characters/doyun.tscn", "x": 17.0, "y": 7.0, "mode": "wander"}
-  ]
+ "interact": [
+  {
+   "id": "book_drawer",
+   "name": "협탁 서랍",
+   "x": 3.5,
+   "y": 5.4,
+   "range": 1.7
+  }
+ ],
+ "npcs": [
+  {
+   "id": "doyun",
+   "name": "도윤",
+   "scene": "res://scenes/characters/doyun.tscn",
+   "x": 17.0,
+   "y": 7.0,
+   "mode": "wander"
+  }
+ ]
 }

@@ -130,7 +130,7 @@ tests/         test_runner.tscn  자동 점검
 - `scenes/maps/int_main.tscn`: 본관 1층 (병동 4실, 병동 복도, 중앙 복도, 식당, 주방, 원장실, 투약실, 로비, 현관, 철문). F6으로 단독 실행.
   - 방향키 걷기 · E 문 열기/닫기 · L 방 이름 · T 시간대(아침/낮/저녁/밤) · V 조명 톤(1회차 따뜻하게/평소/2회차 차갑게) · F 화면 가장자리 안개(0~2단계) · Z 확대(100/75/50%) · G 격자 · Esc
   - 문 종류: 세로 벽 문(v), 가로 벽 문(h), 정면 벽 문(f). 철문은 잠겨 있음. 서하가 문 자리에 서 있으면 닫히지 않음.
-  - 서하 방에는 작은 욕실(세면대·거울·변기)이 딸려 있음. 로비 현관 옆 우산꽂이의 노란 우산은 3일 차 단서.
+  - 병실에는 욕실이 없고, 공용 화장실이 중앙 복도 남쪽(로비 동쪽, 철문 가까이)에 따로 있음: 세면대 2개·거울·변기 2개. 칸막이·장애인용 손잡이 등은 에셋 받는 대로 추가. 서하 방 욕실 자리는 책상과 둥근 벽거울(7일 차 거울 장면)로 바뀜. 로비 현관 옆 우산꽂이의 노란 우산은 3일 차 단서.
 - 그림: `assets/art/tiles/interior.png`(64px 타일), `assets/art/props/interior/`(가구).
   그림체는 해무 톤(기준 견본 `tools/sprite_cleanup/src/map/style_haemu_reference.jpg`). 그림은 한 벌만 두고 분위기는 조명 톤과 안개(`shaders/sea_fog.gdshader`)로 바꿉니다.
   Gemini 원본은 `tools/sprite_cleanup/src/map/`, 정리는 `python3 tools/sprite_cleanup/build_interior.py`.
