@@ -15,6 +15,9 @@ var runner := DialogueRunner.new()
 
 var _bg: ColorRect
 var _cg: TextureRect
+var _lily: Control                 # 프롤로그 백화증 안내: 검은 화면 위 흰 백합 (fx lily:<0~1>, lily_restore, lily_off)
+var _lily_mat: ShaderMaterial
+var _lily_tween: Tween
 var _cg_tween: Tween
 var _gallery: PackedStringArray = []   # 일러스트 보기(개발용)에서 넘겨 볼 이름들
 var _gallery_i := -1
@@ -167,6 +170,12 @@ func _play_fx(key: String) -> void:
 		_show_cg(key.substr(3))
 	if key == "capsule":
 		_pending_capsule = true
+	if key.begins_with("lily:"):
+		_lily_to(float(key.substr(5)))
+	if key == "lily_restore":
+		_lily_restore()
+	if key == "lily_off":
+		_lily_off()
 	if key.begins_with("book:"):
 		_pending_book = key.substr(5)
 	match key:
@@ -211,6 +220,41 @@ func _show_cg(cg_name: String, animate := true) -> void:
 		_cg_tween.tween_property(_cg, "modulate:a", 1.0, CG_FADE)
 	else:
 		_cg.modulate.a = 1.0
+
+
+## 흰 백합: 처음 부르면 검은 화면과 함께 천천히 떠오르고, 이후엔 꽃잎이 그 정도(0~1)까지 흩어짐
+func _lily_to(fade: float) -> void:
+	if _lily_tween:
+		_lily_tween.kill()
+	_lily_tween = create_tween()
+	if not _lily.visible:
+		_lily.show()
+		_lily.modulate.a = 0.0
+		_lily_mat.set_shader_parameter("fade", fade)
+		_lily_tween.tween_property(_lily, "modulate:a", 1.0, 1.4)
+		return
+	var from: float = _lily_mat.get_shader_parameter("fade")
+	_lily_tween.tween_method(func(v: float): _lily_mat.set_shader_parameter("fade", v), from, fade, 1.6) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+## 2회차 "…다시.": 흩어졌던 꽃이 한순간에 온전히 돌아옴
+func _lily_restore() -> void:
+	if _lily_tween:
+		_lily_tween.kill()
+	_lily.show()
+	_lily.modulate.a = 1.0
+	_lily_mat.set_shader_parameter("fade", 0.0)
+
+
+func _lily_off() -> void:
+	if not _lily.visible:
+		return
+	if _lily_tween:
+		_lily_tween.kill()
+	_lily_tween = create_tween()
+	_lily_tween.tween_property(_lily, "modulate:a", 0.0, 1.0)
+	_lily_tween.tween_callback(_lily.hide)
 
 
 func _hide_cg(animate := true) -> void:
@@ -412,6 +456,22 @@ func _build_ui() -> void:
 	_cg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cg.hide()
 	add_child(_cg)
+	_lily = ColorRect.new()
+	(_lily as ColorRect).color = Color.BLACK
+	_lily.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_lily.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lily.hide()
+	add_child(_lily)
+	var flower := TextureRect.new()
+	flower.texture = load("res://assets/art/prologue/white_lily.jpg")
+	flower.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	flower.size = Vector2(480, 480)
+	flower.position = Vector2(640 - 240, 30)
+	flower.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lily_mat = ShaderMaterial.new()
+	_lily_mat.shader = load("res://shaders/lily_fade.gdshader")
+	flower.material = _lily_mat
+	_lily.add_child(flower)
 
 	_menu = VBoxContainer.new()
 	# 화면 가운데 기준으로 위아래·좌우로 똑같이 늘어남 (버튼 수가 바뀌어도 가운데 유지)
