@@ -108,9 +108,11 @@ func _ready() -> void:
 		spr.position = Vector2(p[1], p[2]) * TILE
 		(wall_deco if p[4] else objects).add_child(spr)
 		if p[3].size() == 4:
-			# 좌우는 그림 폭(90%)에 맞춰 옆에서 다가가도 팔이 파고들지 않게, 앞뒤 깊이는 데이터 값 사용
-			var w := spr.texture.get_width() * 0.9
-			var r := Rect2(Vector2(p[1] * TILE - w / 2.0, p[3][1] * TILE), Vector2(w, p[3][3] * TILE))
+			# 좌우는 그림 아래쪽(바닥에 닿는 부분)의 실제 폭에 맞춤 → 옆에서 다가가도 파고들지 않게.
+			# 앞뒤 깊이는 데이터 값 (아래 끝 = 그림 아래 끝이어야 인물이 가구 그림 뒤로 파묻히지 않음)
+			var ext := _base_extent(spr.texture, (p[2] - p[3][1]) * TILE)
+			var x0: float = p[1] * TILE - spr.texture.get_width() / 2.0
+			var r := Rect2(Vector2(x0 + ext.x, p[3][1] * TILE), Vector2(ext.y - ext.x, p[3][3] * TILE))
 			blockers.add_child(_box(r))
 			nav_blocks.append(r)
 	for d in data.get("doors", []):
@@ -217,6 +219,28 @@ func _sprite(name: String) -> Sprite2D:
 	spr.centered = false
 	spr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	return spr
+
+
+## 그림 아래 끝에서 depth px 위까지(= 충돌 깊이만큼)의 불투명한 가로 범위 [시작, 끝] (그림 픽셀). 양끝 2px은 봐줌
+## 식탁처럼 윗판이 다리보다 넓은 가구도 옆에서 파고들지 않게, 바닥 줄만이 아니라 깊이 전체를 봄
+func _base_extent(tex: Texture2D, depth := 0.3 * TILE) -> Vector2:
+	var img := tex.get_image()
+	if img == null:
+		return Vector2(tex.get_width() * 0.05, tex.get_width() * 0.95)
+	if img.is_compressed():
+		img.decompress()
+	var w := img.get_width()
+	var h := img.get_height()
+	var lo := w
+	var hi := -1
+	for y in range(maxi(0, h - int(depth)), h, 2):
+		for x in w:
+			if img.get_pixel(x, y).a > 0.5:
+				lo = mini(lo, x)
+				hi = maxi(hi, x)
+	if hi < 0:
+		return Vector2(w * 0.05, w * 0.95)
+	return Vector2(lo + 2, hi - 1)
 
 
 func _box(r: Rect2) -> CollisionShape2D:
