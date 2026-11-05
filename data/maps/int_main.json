@@ -34,16 +34,16 @@
   "#______________________________________________________#",
   "#______________________________________________________#",
   "#______________________________________________________#",
-  "##########::#######KK####LLLLLLLLLLLLLLLLL###BB#########",
-  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#WWBBWWW######",
-  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#WWBBWWW######",
-  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#WWBBWWW######",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
-  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBB######",
+  "##########::#######KK####LLLLLLLLLLLLLLLLL#BB###########",
+  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#BBWWWWWWWWW##",
+  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#BBWWWWWWWWW##",
+  "#####WWWWW::WWWW#WWKKWWW#LLLLLLLLLLLLLLLLL#BBWWWWWWWWW##",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBBBBBB##",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBBBBBB##",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBBBBBB##",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBBBBBB##",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBBBBBB##",
+  "#####:::::::::::#KKKKKKK#LLLLLLLLLLLLLLLLL#BBBBBBBBBBB##",
   "#################################LL#####################"
  ],
  "props": [
@@ -797,77 +797,115 @@
   ],
   [
    "bath_mirror",
-   43.5,
+   45.8,
    30.1,
    [],
    true
   ],
   [
    "bath_mirror",
-   44.5,
+   46.8,
    30.1,
    [],
    true
   ],
   [
-   "bath_sink",
-   43.5,
-   31.9,
+   "towel_dispenser",
+   47.95,
+   30.2,
+   [],
+   true
+  ],
+  [
+   "wash_counter",
+   46.3,
+   32.4,
    [
-    43.1,
+    45.1,
     31,
-    0.8,
-    0.9
+    2.4,
+    1.4
    ],
    false
   ],
   [
-   "bath_sink",
-   44.5,
-   31.9,
+   "trash_bin",
+   47.95,
+   31.95,
    [
-    44.1,
-    31,
-    0.8,
-    0.9
+    47.7,
+    31.4,
+    0.5,
+    0.5
    ],
    false
   ],
   [
-   "toilet",
-   47.7,
-   32.0,
+   "stall_closed",
+   49.0,
+   33.0,
    [
-    47.3,
+    48.2,
     31,
-    0.8,
-    1.0
+    1.65,
+    2.0
    ],
    false
   ],
   [
-   "toilet",
-   49.2,
-   32.0,
+   "stall_open",
+   50.66,
+   33.0,
    [
-    48.8,
+    49.85,
     31,
-    0.8,
-    1.0
+    1.65,
+    2.0
+   ],
+   false
+  ],
+  [
+   "stall_side",
+   51.87,
+   33.0,
+   [
+    51.5,
+    31,
+    0.73,
+    2.0
+   ],
+   false
+  ],
+  [
+   "toilet_accessible",
+   53.0,
+   32.6,
+   [
+    52.4,
+    31,
+    1.2,
+    1.4
    ],
    false
   ],
   [
    "plant",
-   43.6,
+   53.4,
    36.9,
    [
-    43.2,
+    53.0,
     36.3,
     0.8,
     0.6
    ],
    false
+  ],
+  [
+   "restroom_sign",
+   45.5,
+   27.55,
+   [],
+   true
   ]
  ],
  "doors": [
@@ -935,7 +973,7 @@
    "swing": -1
   },
   {
-   "x": 45,
+   "x": 43,
    "y": 27,
    "type": "h",
    "swing": 1
@@ -1009,7 +1047,7 @@
   ],
   [
    "화장실",
-   46.5,
+   48.5,
    36.4
   ]
  ],
