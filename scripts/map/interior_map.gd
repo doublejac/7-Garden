@@ -93,6 +93,7 @@ func _ready() -> void:
 	map.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	add_child(map)
 	paint()
+	add_child(_make_floor_trim())
 
 	var wall_deco := Node2D.new()      # 벽에 걸린 것: 언제나 인물 뒤
 	add_child(wall_deco)
@@ -781,6 +782,87 @@ func _npc_info() -> String:
 				if m[0] == npc.mode:
 					parts.append("%s: %s" % [npc.display_name, m[1]])
 	return ("  · " + ", ".join(parts)) if parts.size() > 0 else ""
+
+
+# ── 바닥 경계 마감: 바닥 재질이 바뀌는 선마다 나무 마감 띠 (실제 건물의 전환 몰딩처럼) ──
+const TRIM_W := 10
+const TRIM_W_WIDE := 16
+const TRIM_EDGE := Color8(74, 62, 54)
+const TRIM_FILL := Color8(122, 104, 90)
+const TRIM_HI := Color8(154, 136, 118)
+
+
+## 바닥 칸의 재질 (벽은 ""). 두 복도 기호(, _)는 같은 바닥이라 하나로 봄
+func _floor_kind(x: int, y: int) -> String:
+	if y < 0 or y >= layout.size() or x < 0 or x >= String(layout[y]).length():
+		return ""
+	var c := String(layout[y])[x]
+	if c == "#" or c == "W":
+		return ""
+	return "corr" if c in [",", "_"] else c
+
+
+## 재질이 다른 이웃 칸 사이의 선분들 [시작, 끝] (픽셀). 이어진 선은 하나로 합침
+func floor_seams() -> Array:
+	var segs: Array = []
+	var h := layout.size()
+	var w := String(layout[0]).length()
+	for y in h:                                   # 가로로 이웃 → 세로 선
+		var x := 0
+		while x < w:
+			var a := _floor_kind(x, y)
+			var b := _floor_kind(x + 1, y)
+			if a != "" and b != "" and a != b:
+				segs.append([Vector2(x + 1, y) * TILE, Vector2(x + 1, y + 1) * TILE])
+			x += 1
+	for y in h:                                   # 세로로 이웃 → 가로 선
+		var x := 0
+		while x < w:
+			var a := _floor_kind(x, y)
+			var b := _floor_kind(x, y + 1)
+			if a != "" and b != "" and a != b:
+				segs.append([Vector2(x, y + 1) * TILE, Vector2(x + 1, y + 1) * TILE])
+			x += 1
+	# 같은 직선 위에서 끝이 맞닿은 선분 합치기
+	var merged: Array = []
+	for s in segs:
+		var joined := false
+		for m in merged:
+			if m[1] == s[0] and (m[1] - m[0]).normalized() == (s[1] - s[0]).normalized():
+				m[1] = s[1]
+				joined = true
+				break
+		if not joined:
+			merged.append([s[0], s[1]])
+	return merged
+
+
+func _make_floor_trim() -> Node2D:
+	var n := Node2D.new()
+	var seams := floor_seams()
+	n.draw.connect(func():
+		for sg in seams:
+			var a: Vector2 = sg[0]
+			var b: Vector2 = sg[1]
+			var vertical := is_equal_approx(a.x, b.x)
+			var tw := TRIM_W if a.distance_to(b) <= 3 * TILE else TRIM_W_WIDE   # 넓게 트인 경계(로비 등)는 굵게
+			var half := tw / 2.0
+			var r := Rect2(a - Vector2(half, 0), Vector2(tw, b.y - a.y)) if vertical \
+				else Rect2(a - Vector2(0, half), Vector2(b.x - a.x, tw))
+			n.draw_rect(r, TRIM_EDGE)
+			n.draw_rect(r.grow(-1), TRIM_FILL)
+			var hi := Rect2(r.position + Vector2(2, 1), Vector2(2, r.size.y - 2)) if vertical \
+				else Rect2(r.position + Vector2(1, 2), Vector2(r.size.x - 2, 2))
+			n.draw_rect(hi, TRIM_HI)
+			if tw == TRIM_W_WIDE:                     # 굵은 띠는 가운데 홈 한 줄
+				var mid := Rect2(r.position + Vector2(tw / 2.0 - 1, 1), Vector2(2, r.size.y - 2)) if vertical \
+					else Rect2(r.position + Vector2(1, tw / 2.0 - 1), Vector2(r.size.x - 2, 2))
+				n.draw_rect(mid, TRIM_EDGE)
+			# 띠 아래(앞) 쪽에 아주 옅은 그늘
+			var sh := Rect2(r.position + Vector2(r.size.x, 0), Vector2(2, r.size.y)) if vertical \
+				else Rect2(r.position + Vector2(0, r.size.y), Vector2(r.size.x, 2))
+			n.draw_rect(sh, Color(0, 0, 0, 0.12)))
+	return n
 
 
 func _make_grid() -> Node2D:
