@@ -2,7 +2,7 @@
 # 개발용 대사 재생기. 그림 없이 1~4일 차 대사를 텍스트로 돌려보며 분기와 수치를 확인한다.
 # 클릭 / 스페이스 / 엔터: 다음 줄   F1: 디버그 수치 표시 켜고 끄기
 # 일러스트: 대사 줄의 fx에 cg:<파일 이름> 이면 assets/art/cg/<이름>.jpg를 띄우고, cg_off 면 내림
-# 그림책: fx에 book:<시작>-<끝> (예: book:3-4) 이면 그 줄을 보여 준 뒤, 다음 클릭에 채린에게 그 쪽들을 읽어 줌.
+# 그림책: fx에 book:<시작>-<끝> (예: book:3-4, 이야기 장면 번호. 책에 찍힌 페이지로는 장면 k = 2k·2k+1페이지) 이면 그 줄을 보여 준 뒤, 다음 클릭에 채린에게 그 쪽들을 읽어 줌.
 #         책을 덮으면 다음 대사로 이어짐. 밤마다 읽을 쪽은 data/storybook/nubi.json의 nights
 # 캡슐 숨기기: fx에 capsule 이면 그 줄 다음 클릭에 미니게임. 결과 수치(CapsuleTrick.RESULT_STATS)를 적용하고 다음 대사로
 extends Control
@@ -354,8 +354,8 @@ func _show_title() -> void:
 	_dev_button(grid, "일러스트 보기", _open_gallery)
 	_dev_button(grid, "그림책 보기", _open_storybook.bind(false))
 	_dev_button(grid, "그림책 · 찢긴 장 찾음", _open_storybook.bind(true))
-	_dev_button(grid, "읽어 주기 · 첫날 밤 (1~3쪽)", func(): _read_book(1, 3, false, true, _show_title))
-	_dev_button(grid, "읽어 주기 · 2회차 (5~6쪽)", func(): _read_book(5, 6, true, true, _show_title))
+	_dev_button(grid, "읽어 주기 · 첫날 밤 (2~7페이지)", func(): _read_book(1, 3, false, true, _show_title))
+	_dev_button(grid, "읽어 주기 · 2회차 (10~13페이지)", func(): _read_book(5, 6, true, true, _show_title))
 	_dev_button(grid, "캡슐 숨기기 (2회차 투약)", func(): _play_capsule(_show_title))
 	_dev_button(grid, "그림 그리기", _open_sketch.bind(false, 1))
 	_dev_button(grid, "그림 그리기 · 2회차", _open_sketch.bind(true, 2))

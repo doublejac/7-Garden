@@ -693,7 +693,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		KEY_B:
 			var i := BOOK_DEV_STEPS.find(GameState.book_read)
 			GameState.book_read = BOOK_DEV_STEPS[(i + 1) % BOOK_DEV_STEPS.size()]
-			_update_info("(개발용) 읽은 그림책: %d쪽까지" % GameState.book_read)
+			_update_info("(개발용) 읽은 그림책: %s" % ("없음" if GameState.book_read == 0 else "%d페이지까지" % (GameState.book_read * 2 + 1)))
 		KEY_E:
 			var it := interactable_near()
 			if not it.is_empty():
@@ -768,7 +768,7 @@ func _apply_time() -> void:
 
 
 func _update_info(note := "") -> void:
-	info.text = "[%s]%s  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · N 도윤 행동 · E 문·살펴보기 · B 읽은 그림책 쪽(개발용) · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
+	info.text = "[%s]%s  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · N 도윤 행동 · E 문·살펴보기 · B 읽은 그림책 페이지(개발용) · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
 		CHARACTERS[char_index][0], _npc_info(), data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
 		roundi(camera.zoom.x * 100), note]
 
