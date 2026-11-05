@@ -1,2 +1,2 @@
 NotoSerifKR-*.otf: Noto Serif CJK KR (Google/Adobe), SIL Open Font License 1.1 — https://openfontlicense.org
-게임 안 그림책 글자에 쓰려고 한글·영문·문장부호만 남겨 줄인 판.
+게임 전체 기본 글꼴. 한글 전체·영문·문장부호·기호와 대사에 쓰인 한자만 남겨 줄인 판 (tools/fonts/build_fonts.py).
