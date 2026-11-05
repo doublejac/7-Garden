@@ -346,7 +346,7 @@ func _show_title() -> void:
 	for c in _menu.get_children():
 		c.queue_free()
 	var title := Label.new()
-	title.text = "해무장"
+	title.text = "완전한 작별을 위한 정원"
 	title.add_theme_font_size_override("font_size", 48)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_menu.add_child(title)

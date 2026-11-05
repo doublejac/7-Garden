@@ -1,4 +1,6 @@
-# 해무장 (Godot 4.7 프로젝트)
+# 완전한 작별을 위한 정원 (Godot 4.7 프로젝트)
+
+> 게임 이름은 「완전한 작별을 위한 정원」. 해무장(海霧莊)은 게임 속 호스피스(무대) 이름.
 
 > 시스템 설계서 (최종본, 앞으로 바뀌는 설정은 여기에 반영): [구글 문서 「완전한 작별을 위한 정원 — 시스템 설계서 최종본」](https://docs.google.com/document/d/1JD9Y2g0wYH64W0j8GlLbQTZPz5DDTDum7eI_Ed6r3Qw/edit)
 
@@ -156,4 +158,4 @@ tests/         test_runner.tscn  자동 점검
 ## 아직 할 일
 - 한글 폰트: 지금은 운영체제 기본 폰트로 한글을 표시합니다. 배포 전에 Pretendard나 Noto Sans KR 같은 무료 폰트를 `assets/fonts/`에 넣고 테마에 지정해야 합니다.
 - 연출 키(`fx` 열)는 글리치 깜빡임과 채도만 연결되어 있고, 나머지는 화면 위 표시줄에 키 이름만 표시됩니다.
-- 저장 데이터 위치(Windows): `%APPDATA%\Godot\app_userdata\해무장\`
+- 저장 데이터 위치(Windows): `%APPDATA%\Godot\app_userdata\완전한 작별을 위한 정원\`
