@@ -9,3 +9,6 @@ Thumbs.db
 
 # Python
 __pycache__/
+
+# Godot가 CSV를 번역 파일로 잘못 가져올 때 생기는 파일 (대사 CSV는 importer="keep")
+*.translation
