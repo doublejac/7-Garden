@@ -304,6 +304,19 @@ func _play_capsule(after: Callable) -> void:
 		after.call())
 
 
+## 물건 3D로 살펴보기 (show_secret = 2회차 숨은 단서)
+func _inspect(id: String, secret: bool) -> void:
+	_book_open = true
+	_menu.hide()
+	var v := Inspect3D.new()
+	v.item_id = id
+	v.show_secret = secret
+	add_child(v)
+	v.closed.connect(func():
+		_book_open = false
+		_show_title())
+
+
 ## 그림 그리기 놀이. 다 그리면 채린의 반응 (2회차면 붉은 속마음도)
 func _open_sketch(color_loss: bool, loop: int) -> void:
 	_menu.hide()
@@ -357,6 +370,8 @@ func _show_title() -> void:
 	_dev_button(grid, "읽어 주기 · 첫날 밤 (2~7페이지)", func(): _read_book(1, 3, false, true, _show_title))
 	_dev_button(grid, "읽어 주기 · 2회차 (10~13페이지)", func(): _read_book(5, 6, true, true, _show_title))
 	_dev_button(grid, "캡슐 숨기기 (2회차 투약)", func(): _play_capsule(_show_title))
+	_dev_button(grid, "살펴보기 · 곰돌이", _inspect.bind("teddy", false))
+	_dev_button(grid, "살펴보기 · 곰돌이 · 2회차", _inspect.bind("teddy", true))
 	_dev_button(grid, "그림 그리기", _open_sketch.bind(false, 1))
 	_dev_button(grid, "그림 그리기 · 2회차", _open_sketch.bind(true, 2))
 	_menu.show()
