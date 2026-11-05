@@ -977,6 +977,7 @@
    2.6
   ]
  ],
+  "interact": [{"id": "book_drawer", "name": "협탁 서랍", "x": 3.5, "y": 5.4, "range": 1.7}],
   "npcs": [
     {"id": "doyun", "name": "도윤", "scene": "res://scenes/characters/doyun.tscn", "x": 17.0, "y": 7.0, "mode": "wander"}
   ]

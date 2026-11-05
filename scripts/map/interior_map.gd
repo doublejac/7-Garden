@@ -78,6 +78,10 @@ var time_index := 1
 var tone_index := 0
 var fog_index := 1
 var fog_rect: ColorRect
+var interactables: Array = []        # data["interact"]: E로 살펴보는 곳 (예: 그림책을 넣어 둔 협탁 서랍)
+var hint: Label                      # 가까이 가면 뜨는 "E 협탁 서랍" 안내
+var _book: Storybook                 # 서랍에서 꺼내 보는 그림책 (열려 있는 동안 걷기·단축키 멈춤)
+const BOOK_DEV_STEPS := [0, 3, 5, 7, 9, 11, 14]   # B 키(개발용): 읽은 쪽 바꾸기 = 밤마다 읽는 분량
 
 
 func _ready() -> void:
@@ -110,6 +114,7 @@ func _ready() -> void:
 			nav_blocks.append(r)
 	for d in data.get("doors", []):
 		_add_door(d)
+	interactables = data.get("interact", [])
 	for m in data.get("moonlights", []):
 		moon_lights.append(_make_light(Vector2(m[0], m[1]) * TILE, m[2]))
 	set_night(false)
@@ -593,6 +598,13 @@ func _setup_dev() -> void:
 	info.add_theme_color_override("font_outline_color", Color.BLACK)
 	info.add_theme_constant_override("outline_size", 6)
 	hud.add_child(info)
+	hint = Label.new()
+	hint.add_theme_font_size_override("font_size", 18)
+	hint.add_theme_color_override("font_color", Color.WHITE)
+	hint.add_theme_color_override("font_outline_color", Color.BLACK)
+	hint.add_theme_constant_override("outline_size", 6)
+	hint.visible = false
+	hud.add_child(hint)
 	var fog_layer := CanvasLayer.new()   # 조명(CanvasModulate)의 영향을 받지 않는 화면 효과
 	fog_layer.layer = 5
 	add_child(fog_layer)
@@ -648,6 +660,16 @@ func feet_rect() -> Rect2:
 func _physics_process(_delta: float) -> void:
 	if player == null:
 		return
+	if _book:
+		player.velocity = Vector2.ZERO
+		avatar.walk(Vector2.ZERO)
+		return
+	var it := interactable_near()
+	hint.visible = not it.is_empty()
+	if hint.visible:
+		hint.text = "E  " + String(it.get("name", "살펴보기"))
+		var p := get_viewport().get_canvas_transform() * (Vector2(it.x, it.y) * TILE)
+		hint.position = p + Vector2(-hint.size.x / 2.0, -110)
 	var dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	player.velocity = dir * SPEED
 	player.move_and_slide()
@@ -655,7 +677,7 @@ func _physics_process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if player == null or not (event is InputEventKey and event.pressed and not event.echo):
+	if _book or player == null or not (event is InputEventKey and event.pressed and not event.echo):
 		return
 	match event.keycode:
 		KEY_ESCAPE:
@@ -668,7 +690,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			for npc in npcs:
 				npc.mode = NPC_MODES[npc_mode_i][0]
 			_update_info()
+		KEY_B:
+			var i := BOOK_DEV_STEPS.find(GameState.book_read)
+			GameState.book_read = BOOK_DEV_STEPS[(i + 1) % BOOK_DEV_STEPS.size()]
+			_update_info("(개발용) 읽은 그림책: %d쪽까지" % GameState.book_read)
 		KEY_E:
+			var it := interactable_near()
+			if not it.is_empty():
+				_interact(it)
+				return
 			var r := toggle_door_near(feet_rect())
 			if door_push != Vector2.ZERO:
 				player.move_and_collide(door_push)
@@ -692,6 +722,44 @@ func _unhandled_input(event: InputEvent) -> void:
 			label_root.visible = not label_root.visible
 
 
+## 발 위치에서 가장 가까운, 범위 안의 살펴볼 곳 (없으면 빈 Dictionary)
+func interactable_near() -> Dictionary:
+	var feet := player.position
+	var best := {}
+	var best_d := INF
+	for it in interactables:
+		var d := feet.distance_to(Vector2(it.x, it.y) * TILE)
+		if d <= float(it.get("range", 1.5)) * TILE and d < best_d:
+			best = it
+			best_d = d
+	return best
+
+
+func _interact(it: Dictionary) -> void:
+	match String(it.id):
+		"book_drawer":
+			open_book_drawer()
+
+
+## 협탁 서랍: 지금까지 채린에게 읽어 준 데까지(GameState.book_read) 그림책을 한꺼번에 다시 봄. 반응 대사 없음
+func open_book_drawer() -> void:
+	if GameState.book_read <= 0:
+		_update_info("서랍 안은 비어 있다.")
+		return
+	var layer := CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	_book = Storybook.new()
+	_book.found_torn = GameState.flags.get("found_torn", false)
+	_book.page_to = GameState.book_read
+	layer.add_child(_book)
+	hint.visible = false
+	_book.closed.connect(func():
+		_book = null
+		layer.queue_free()
+		_update_info("그림책을 서랍에 다시 넣었다."))
+
+
 func _apply_time() -> void:
 	modulate_node.color = TONES[tone_index][1][time_index]
 	set_night(time_index == 3)
@@ -700,7 +768,7 @@ func _apply_time() -> void:
 
 
 func _update_info(note := "") -> void:
-	info.text = "[%s]%s  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · N 도윤 행동 · E 문 · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
+	info.text = "[%s]%s  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · N 도윤 행동 · E 문·살펴보기 · B 읽은 그림책 쪽(개발용) · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
 		CHARACTERS[char_index][0], _npc_info(), data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
 		roundi(camera.zoom.x * 100), note]
 

@@ -354,7 +354,7 @@ func _show_title() -> void:
 	_dev_button(grid, "일러스트 보기", _open_gallery)
 	_dev_button(grid, "그림책 보기", _open_storybook.bind(false))
 	_dev_button(grid, "그림책 · 찢긴 장 찾음", _open_storybook.bind(true))
-	_dev_button(grid, "읽어 주기 · 첫날 밤 (1~2쪽)", func(): _read_book(1, 2, false, true, _show_title))
+	_dev_button(grid, "읽어 주기 · 첫날 밤 (1~3쪽)", func(): _read_book(1, 3, false, true, _show_title))
 	_dev_button(grid, "읽어 주기 · 2회차 (5~6쪽)", func(): _read_book(5, 6, true, true, _show_title))
 	_dev_button(grid, "캡슐 숨기기 (2회차 투약)", func(): _play_capsule(_show_title))
 	_dev_button(grid, "그림 그리기", _open_sketch.bind(false, 1))

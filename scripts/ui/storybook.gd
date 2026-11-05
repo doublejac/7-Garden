@@ -809,7 +809,7 @@ func _update_hint() -> void:
 	if _reveal:
 		_hint.text = "클릭: 글 다 보기"
 	elif index >= _hi and page_to > 0:
-		_hint.text = "클릭: 오늘은 여기까지 · 덮기"
+		_hint.text = "클릭: 오늘은 여기까지 · 덮기" if reactions else "읽은 데까지 다 봤다 · 클릭: 덮기"
 	else:
 		_hint.text = "클릭: 넘기기 · 오른쪽 클릭: 앞으로 · Esc: 덮기"
 
