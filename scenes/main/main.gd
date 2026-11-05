@@ -15,6 +15,7 @@ var runner := DialogueRunner.new()
 
 var _bg: ColorRect
 var _cg: TextureRect
+var _cg_prev: TextureRect  # 일러스트를 바꿀 때 이전 그림을 잠깐 깔아 두고 겹쳐 바꿈
 var _lily: Control                 # 프롤로그 백화증 안내: 검은 화면 위 흰 백합 (fx lily:<0~1>, lily_restore, lily_off)
 var _lily_mat: ShaderMaterial
 var _lily_tween: Tween
@@ -210,16 +211,25 @@ func _show_cg(cg_name: String, animate := true) -> void:
 	if not ResourceLoader.exists(path):
 		push_warning("일러스트 없음: " + path)
 		return
-	_cg.texture = load(path)
-	_cg.show()
 	if _cg_tween:
 		_cg_tween.kill()
+	# 이미 다른 그림이 떠 있으면 그 위로 새 그림을 겹쳐 바꿈 (배경이 비쳐 깜빡이지 않게)
+	var crossfade := animate and _cg.visible and _cg.modulate.a > 0.5
+	if crossfade:
+		_cg_prev.texture = _cg.texture
+		_cg_prev.modulate.a = 1.0
+		_cg_prev.show()
+	_cg.texture = load(path)
+	_cg.show()
 	if animate:
 		_cg.modulate.a = 0.0
 		_cg_tween = create_tween()
 		_cg_tween.tween_property(_cg, "modulate:a", 1.0, CG_FADE)
+		if crossfade:
+			_cg_tween.tween_callback(_cg_prev.hide)
 	else:
 		_cg.modulate.a = 1.0
+		_cg_prev.hide()
 
 
 ## 흰 백합: 처음 부르면 검은 화면과 함께 천천히 떠오르고, 이후엔 꽃잎이 그 정도(0~1)까지 흩어짐
@@ -260,6 +270,7 @@ func _lily_off() -> void:
 func _hide_cg(animate := true) -> void:
 	if _cg_tween:
 		_cg_tween.kill()
+	_cg_prev.hide()
 	if not animate or not _cg.visible:
 		_cg.hide()
 		return
@@ -455,6 +466,8 @@ func _build_ui() -> void:
 	_cg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_cg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cg.hide()
+	_cg_prev = _cg.duplicate()
+	add_child(_cg_prev)
 	add_child(_cg)
 	_lily = ColorRect.new()
 	(_lily as ColorRect).color = Color.BLACK
