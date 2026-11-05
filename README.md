@@ -12,6 +12,11 @@
    - F1: 화면 위 수치 표시 켜기/끄기
    - "2회차로 시작"은 개발용 버튼입니다.
 
+## 글꼴
+- 게임 전체 기본 글꼴: **본명조(Noto Serif CJK KR)** — `project.godot`의 `gui/theme/custom_font`. 대사창·타이틀·메뉴·그림책·미니게임 모두 이 글꼴
+- `assets/fonts/NotoSerifKR-{Regular,SemiBold}.otf`는 필요한 글자만 남긴 파일. 한글 전체 + 문장부호 + 대사·데이터에 실제로 쓰인 한자 등. 대사에 새 한자·특수문자를 넣었으면 `python3 tools/fonts/build_fonts.py`로 다시 만들기
+- 다른 글꼴로 바꾸려면 .ttf/.otf를 `assets/fonts/`에 넣고 `gui/theme/custom_font` 경로만 바꾸면 됨 (상업용 무료 OFL 글꼴인지 확인)
+
 ## 프롤로그 (0일 차)
 - `data/dialogue/day0.csv`. 새로 시작하면 프롤로그부터: 백화증 시스템 안내 → 입소 하루 전 진료실 → 다음 날 안개 낀 해안도로 차 안 → 해무장 입구 도착 → 「1일 차」
 - 전체가 도윤이 심은 가짜 기억. 1회차엔 애틋한 연인의 마지막 일상, 2회차엔 어긋남이 보임 (의사 목소리 = 원장, 진료 기록의 「10」, "처음 만난 날" 대답을 도윤이 바닷가로 고쳐 줌)

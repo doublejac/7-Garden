@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://b6l412x1ot6qe"
+
+[deps]
+
+files=["res://data/dialogue/day0.loop.translation", "res://data/dialogue/day0.day.translation", "res://data/dialogue/day0.scene.translation", "res://data/dialogue/day0.time.translation", "res://data/dialogue/day0.speaker.translation", "res://data/dialogue/day0.face.translation", "res://data/dialogue/day0.type.translation", "res://data/dialogue/day0.text.translation", "res://data/dialogue/day0.inner.translation", "res://data/dialogue/day0.cond.translation", "res://data/dialogue/day0.next.translation", "res://data/dialogue/day0.fx.translation", "res://data/dialogue/day0.memo.translation", "res://data/dialogue/day0.status.translation"]
+
+source_file="res://data/dialogue/day0.csv"
+dest_files=["res://data/dialogue/day0.loop.translation", "res://data/dialogue/day0.day.translation", "res://data/dialogue/day0.scene.translation", "res://data/dialogue/day0.time.translation", "res://data/dialogue/day0.speaker.translation", "res://data/dialogue/day0.face.translation", "res://data/dialogue/day0.type.translation", "res://data/dialogue/day0.text.translation", "res://data/dialogue/day0.inner.translation", "res://data/dialogue/day0.cond.translation", "res://data/dialogue/day0.next.translation", "res://data/dialogue/day0.fx.translation", "res://data/dialogue/day0.memo.translation", "res://data/dialogue/day0.status.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true
