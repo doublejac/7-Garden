@@ -143,13 +143,25 @@
     56,
     56
   ],
+  "stall_divider": [
+    15,
+    148
+  ],
+  "stall_divider_paper": [
+    24,
+    148
+  ],
+  "restroom_sign": [
+    40,
+    50
+  ],
   "wash_counter": [
     154,
     108
   ],
   "toilet_b": [
     50,
-    101
+    102
   ],
   "toilet_accessible": [
     98,
@@ -161,7 +173,7 @@
   ],
   "trash_bin": [
     36,
-    55
+    56
   ],
   "wide_mirror": [
     140,

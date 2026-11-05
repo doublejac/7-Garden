@@ -91,7 +91,10 @@ PROPS2 = {
     "bath_mirror": ("haemu_props_kitchen_bath.jpg", (1436, 1648, 1703, 1980), ("w", 52)),
     "toilet": ("haemu_props_kitchen_bath.jpg", (1462, 2022, 1673, 2398), ("w", 48)),
     "bath_mirror_sq": ("haemu_props_kitchen_bath.jpg", (977, 2051, 1267, 2343), ("w", 56)),
-    # 공용 화장실: 긴 세면대는 1차 시트, 나머지는 2차 시트 (정면 시점). 칸막이는 build_stall_divider.py로 그림
+    # 공용 화장실: 긴 세면대는 1차 시트, 나머지는 2차 시트 (정면 시점, 변기 몸통 폭 280px → 50px 배율 0.179)
+    "stall_divider": ("haemu_props_restroom2.jpg", (502, 127, 585, 947), ("w", 15)),        # 옆 칸막이 (뒷벽에서 앞으로)
+    "stall_divider_paper": ("haemu_props_restroom2.jpg", (813, 127, 944, 947), ("h", 148)),  # 휴지걸이 달린 것
+    "restroom_sign": ("haemu_props_restroom2.jpg", (229, 1817, 550, 2215), ("w", 40)),      # 남녀 공용 표지판
     "wash_counter": ("haemu_props_restroom.jpg", (834, 1669, 1680, 2264), ("w", 154)),
     "toilet_b": ("haemu_props_restroom2.jpg", (1365, 220, 1645, 787), ("w", 50)),
     "toilet_accessible": ("haemu_props_restroom2.jpg", (114, 1087, 663, 1641), ("w", 98)),
