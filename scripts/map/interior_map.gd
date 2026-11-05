@@ -813,7 +813,7 @@ func floor_seams() -> Array:
 			var a := _floor_kind(x, y)
 			var b := _floor_kind(x + 1, y)
 			if a != "" and b != "" and a != b:
-				segs.append([Vector2(x + 1, y) * TILE, Vector2(x + 1, y + 1) * TILE])
+				segs.append([Vector2(x + 1, y) * TILE, Vector2(x + 1, y + 1) * TILE, _trim_side(a, b)])
 			x += 1
 	for y in h:                                   # 세로로 이웃 → 가로 선
 		var x := 0
@@ -821,20 +821,29 @@ func floor_seams() -> Array:
 			var a := _floor_kind(x, y)
 			var b := _floor_kind(x, y + 1)
 			if a != "" and b != "" and a != b:
-				segs.append([Vector2(x, y + 1) * TILE, Vector2(x + 1, y + 1) * TILE])
+				segs.append([Vector2(x, y + 1) * TILE, Vector2(x + 1, y + 1) * TILE, _trim_side(a, b)])
 			x += 1
 	# 같은 직선 위에서 끝이 맞닿은 선분 합치기
 	var merged: Array = []
 	for s in segs:
 		var joined := false
 		for m in merged:
-			if m[1] == s[0] and (m[1] - m[0]).normalized() == (s[1] - s[0]).normalized():
+			if m[1] == s[0] and m[2] == s[2] and (m[1] - m[0]).normalized() == (s[1] - s[0]).normalized():
 				m[1] = s[1]
 				joined = true
 				break
 		if not joined:
-			merged.append([s[0], s[1]])
+			merged.append([s[0], s[1], s[2]])
 	return merged
+
+
+## 띠를 어느 쪽에 붙일지: 복도 쪽으로 삐져나오지 않게 방(복도가 아닌 쪽)으로. -1 = 선의 앞(왼쪽·위), 1 = 뒤(오른쪽·아래), 0 = 가운데
+func _trim_side(a: String, b: String) -> int:
+	if b == "corr":
+		return -1
+	if a == "corr":
+		return 1
+	return 0
 
 
 func _make_floor_trim() -> Node2D:
@@ -846,9 +855,10 @@ func _make_floor_trim() -> Node2D:
 			var b: Vector2 = sg[1]
 			var vertical := is_equal_approx(a.x, b.x)
 			var tw := TRIM_W if a.distance_to(b) <= 3 * TILE else TRIM_W_WIDE   # 넓게 트인 경계(로비 등)는 굵게
-			var half := tw / 2.0
-			var r := Rect2(a - Vector2(half, 0), Vector2(tw, b.y - a.y)) if vertical \
-				else Rect2(a - Vector2(0, half), Vector2(b.x - a.x, tw))
+			var side: int = sg[2]
+			var off := -tw / 2.0 + side * (tw / 2.0)       # 선을 기준으로 띠의 시작 (방 쪽으로 밀기)
+			var r := Rect2(a + Vector2(off, 0), Vector2(tw, b.y - a.y)) if vertical \
+				else Rect2(a + Vector2(0, off), Vector2(b.x - a.x, tw))
 			n.draw_rect(r, TRIM_EDGE)
 			n.draw_rect(r.grow(-1), TRIM_FILL)
 			var hi := Rect2(r.position + Vector2(2, 1), Vector2(2, r.size.y - 2)) if vertical \
