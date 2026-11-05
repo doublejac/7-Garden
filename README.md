@@ -131,6 +131,7 @@ tests/         test_runner.tscn  자동 점검
   - 방향키 걷기 · E 문 열기/닫기 · L 방 이름 · T 시간대(아침/낮/저녁/밤) · V 조명 톤(1회차 따뜻하게/평소/2회차 차갑게) · F 화면 가장자리 안개(0~2단계) · Z 확대(100/75/50%) · G 격자 · Esc
   - 문 종류: 세로 벽 문(v), 가로 벽 문(h), 정면 벽 문(f). 철문은 잠겨 있음. 서하가 문 자리에 서 있으면 닫히지 않음.
   - 바닥 재질이 바뀌는 선(방↔복도 문턱, 로비·식당·주방↔복도)마다 나무 마감 띠를 코드로 그림 (`interior_map.gd`의 `floor_seams`). 넓게 트인 경계는 굵은 띠. 문 자리에는 원래 문지방 그림도 깔림
+  - 복도 러너 카페트(중앙 복도 `runner_h`, 병동 복도 `runner_v`)와 로비 깔개(`lobby_rug`, 소파 아래). `tools/sprite_cleanup/build_rugs.py`가 시트(`src/map/haemu_rugs.jpg`)의 끝·가운데 조각을 원본 크기에서 이어 붙인 뒤 줄임 → 이음매 없음. 길이는 가운데 조각 수(`H_COUNT`, `V_COUNT`)로 조절
   - 병실에는 욕실이 없고, 공용 화장실이 중앙 복도 남쪽(로비 동쪽, 철문 가까이)에 따로 있음: 긴 세면대(2구)·넓은 거울·종이 타월·정면 휴지통, 옆 칸막이(`stall_divider`, 휴지걸이 달린 `stall_divider_paper`)로 나눈 변기 두 칸, 손잡이 달린 장애인용 변기. 표지판은 쓰지 않음. 에셋 원본 `src/map/haemu_props_restroom.jpg`(세면대)·`haemu_props_restroom2.jpg`(나머지).
 - 그림: `assets/art/tiles/interior.png`(64px 타일), `assets/art/props/interior/`(가구).
   그림체는 해무 톤(기준 견본 `tools/sprite_cleanup/src/map/style_haemu_reference.jpg`). 그림은 한 벌만 두고 분위기는 조명 톤과 안개(`shaders/sea_fog.gdshader`)로 바꿉니다.
