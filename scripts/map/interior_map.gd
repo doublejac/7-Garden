@@ -295,6 +295,15 @@ func _add_door(d: Dictionary) -> void:
 			leaf.scale.x = dw * TILE / float(frames[0].get_width())   # 문 자리 폭에 꼭 맞게
 			var fh := frames[0].get_height()   # 닫힌 문 높이 (문틀 위 ~ 바닥)
 			leaf.position = Vector2(-dw * TILE / 2.0, -fh)
+			# 열린 문 그림에서 실제로 비어 있는(지나갈 수 있는) 폭을 재서, 양옆 문틀·열린 문짝 자리는 막음
+			# (안 그러면 문 자리 안에서 옆으로 걸어 문틀·문짝을 뚫고 지나가 보임)
+			var clear := _front_door_clear(frames[frames.size() - 1])
+			var sx := dw * TILE / float(frames[0].get_width())
+			var x0 := x * TILE
+			for pr in [Rect2(x0, y * TILE, clear.x * sx, 4 * TILE),
+					Rect2(x0 + clear.y * sx, y * TILE, dw * TILE - clear.y * sx, 4 * TILE)]:
+				if pr.size.x > 1.0:
+					posts.append(pr)
 			# 문틀 위쪽은 옆 벽과 같은 벽 앞면 타일을 이어 그림 (몰딩·판벽 선이 옆 벽과 맞게)
 			var atlas_face: Texture2D = load(ATLAS)
 			for i in dw:
@@ -346,6 +355,27 @@ func _add_door(d: Dictionary) -> void:
 		"manual": d.get("manual", false), "tween": null}
 	doors.append(door)
 	_set_door(door, d.get("open", false), false)
+
+
+## 열린 정면 문 그림의 아래쪽 줄에서 가장 넓게 비어(트여) 있는 구간 [시작, 끝] (그림 픽셀)
+func _front_door_clear(tex: Texture2D) -> Vector2:
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var y := img.get_height() - 40
+	var best := Vector2(0, img.get_width())
+	var best_w := -1
+	var start := -1
+	for x in img.get_width() + 1:
+		var empty := x < img.get_width() and img.get_pixel(x, y).a < 0.8   # 열린 문 안쪽은 반투명 어둠, 문틀·문짝은 불투명
+		if empty and start < 0:
+			start = x
+		elif not empty and start >= 0:
+			if x - start > best_w:
+				best_w = x - start
+				best = Vector2(start, x)
+			start = -1
+	return best
 
 
 func _set_door(door: Dictionary, open: bool, animate := true) -> void:
