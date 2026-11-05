@@ -143,41 +143,29 @@
     56,
     56
   ],
-  "stall_closed": [
-    106,
-    149
-  ],
-  "stall_open": [
-    106,
-    149
-  ],
-  "stall_side": [
-    47,
-    151
-  ],
-  "toilet_accessible": [
-    100,
-    101
-  ],
-  "towel_dispenser": [
-    40,
-    49
-  ],
-  "trash_bin": [
-    35,
-    54
-  ],
-  "restroom_sign": [
-    33,
-    40
-  ],
   "wash_counter": [
     154,
     108
   ],
-  "stall_panel": [
-    69,
-    91
+  "toilet_b": [
+    50,
+    101
+  ],
+  "toilet_accessible": [
+    98,
+    99
+  ],
+  "towel_dispenser": [
+    39,
+    48
+  ],
+  "trash_bin": [
+    36,
+    55
+  ],
+  "wide_mirror": [
+    140,
+    75
   ],
   "chaerin_bed": [
     128,

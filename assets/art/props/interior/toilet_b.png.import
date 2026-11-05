@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://com5ym7mt2bf"
-path="res://.godot/imported/stall_closed.png-5b3f65757a49e873c41dd63b4014b33d.ctex"
+uid="uid://5e6hljx0axeo"
+path="res://.godot/imported/toilet_b.png-c3c893482f41262ce3dfd191122d728a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/props/interior/stall_closed.png"
-dest_files=["res://.godot/imported/stall_closed.png-5b3f65757a49e873c41dd63b4014b33d.ctex"]
+source_file="res://assets/art/props/interior/toilet_b.png"
+dest_files=["res://.godot/imported/toilet_b.png-c3c893482f41262ce3dfd191122d728a.ctex"]
 
 [params]
 

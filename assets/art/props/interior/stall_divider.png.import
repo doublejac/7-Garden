@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dcgequmr6w1e2"
-path="res://.godot/imported/stall_panel.png-b8d57f053b2e7da9dca2b0fe06542e0e.ctex"
+uid="uid://cqhbdcddcuku1"
+path="res://.godot/imported/stall_divider.png-37c38a696294f9b2a49f0afa9b894a19.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/props/interior/stall_panel.png"
-dest_files=["res://.godot/imported/stall_panel.png-b8d57f053b2e7da9dca2b0fe06542e0e.ctex"]
+source_file="res://assets/art/props/interior/stall_divider.png"
+dest_files=["res://.godot/imported/stall_divider.png-37c38a696294f9b2a49f0afa9b894a19.ctex"]
 
 [params]
 

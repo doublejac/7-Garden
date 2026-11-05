@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cpchsmh14eoo3"
-path="res://.godot/imported/stall_open.png-217a72847e15653c79e9219e1b17e1a6.ctex"
+uid="uid://d08ye56dhq0qn"
+path="res://.godot/imported/wide_mirror.png-ef4d234076afb52c528fbd1b818721b8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/props/interior/stall_open.png"
-dest_files=["res://.godot/imported/stall_open.png-217a72847e15653c79e9219e1b17e1a6.ctex"]
+source_file="res://assets/art/props/interior/wide_mirror.png"
+dest_files=["res://.godot/imported/wide_mirror.png-ef4d234076afb52c528fbd1b818721b8.ctex"]
 
 [params]
 

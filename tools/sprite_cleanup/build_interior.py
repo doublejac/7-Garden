@@ -91,16 +91,13 @@ PROPS2 = {
     "bath_mirror": ("haemu_props_kitchen_bath.jpg", (1436, 1648, 1703, 1980), ("w", 52)),
     "toilet": ("haemu_props_kitchen_bath.jpg", (1462, 2022, 1673, 2398), ("w", 48)),
     "bath_mirror_sq": ("haemu_props_kitchen_bath.jpg", (977, 2051, 1267, 2343), ("w", 56)),
-    # 공용 화장실 (haemu_props_restroom.jpg, 변기 몸통 폭 264px → 48px 배율 0.182)
-    "stall_closed": ("haemu_props_restroom.jpg", (98, 127, 682, 947), ("w", 106)),
-    "stall_open": ("haemu_props_restroom.jpg", (767, 127, 1351, 947), ("w", 106)),
-    "stall_side": ("haemu_props_restroom.jpg", (1437, 127, 1693, 947), ("w", 47)),
-    "toilet_accessible": ("haemu_props_restroom.jpg", (114, 1086, 663, 1641), ("w", 100)),
-    "towel_dispenser": ("haemu_props_restroom.jpg", (813, 1177, 1032, 1445), ("w", 40)),
-    "trash_bin": ("haemu_props_restroom.jpg", (1158, 1219, 1352, 1517), ("w", 35)),
-    "restroom_sign": ("haemu_props_restroom.jpg", (1489, 1236, 1669, 1456), ("w", 33)),
+    # 공용 화장실: 긴 세면대는 1차 시트, 나머지는 2차 시트 (정면 시점). 칸막이는 build_stall_divider.py로 그림
     "wash_counter": ("haemu_props_restroom.jpg", (834, 1669, 1680, 2264), ("w", 154)),
-    "stall_panel": ("haemu_props_restroom.jpg", (175, 1765, 554, 2264), ("w", 69)),
+    "toilet_b": ("haemu_props_restroom2.jpg", (1365, 220, 1645, 787), ("w", 50)),
+    "toilet_accessible": ("haemu_props_restroom2.jpg", (114, 1087, 663, 1641), ("w", 98)),
+    "towel_dispenser": ("haemu_props_restroom2.jpg", (892, 1149, 1112, 1421), ("w", 39)),
+    "trash_bin": ("haemu_props_restroom2.jpg", (1406, 1118, 1610, 1432), ("w", 36)),
+    "wide_mirror": ("haemu_props_restroom2.jpg", (861, 1597, 1654, 2021), ("w", 140)),
     # 채린 방·보호자실·빈 병실 (haemu_props_rooms.jpg)
     "chaerin_bed": ("haemu_props_rooms.jpg", (154, 132, 566, 762), ("w", 128)),
     "vanity": ("haemu_props_rooms.jpg", (835, 125, 1213, 777), ("w", 116)),
