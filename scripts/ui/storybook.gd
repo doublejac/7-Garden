@@ -262,6 +262,10 @@ func _make_page(spec: Dictionary, side: int) -> Control:
 			img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			if torn:
 				img.modulate = Color(0.97, 0.92, 0.84)
+			var im := ShaderMaterial.new()        # 종이에 스며든 그림 (사각 테두리 없이)
+			im.shader = load("res://shaders/book_image.gdshader")
+			im.set_shader_parameter("seed", float(spec.get("num", 0)))
+			img.material = im
 			page.add_child(img)
 		"text":
 			_add_text_page(page, spec["text"])
