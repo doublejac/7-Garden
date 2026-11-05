@@ -337,13 +337,13 @@ func _add_door(d: Dictionary) -> void:
 		leaf_body.add_child(_box(Rect2(leaf_rect.position - node.position, leaf_rect.size)))
 	node.add_child(leaf_body)
 	nav_blocks.append_array(posts)
-	if leaf_rect.has_area():
-		nav_blocks.append(leaf_rect)   # 열린 문짝 자리는 늘 피해 감
+	if leaf_rect.has_area() and not (AUTO_DOORS and not d.get("locked", false) and not d.get("manual", false)):
+		nav_blocks.append(leaf_rect)   # 손으로 여는 문: 열린 문짝 자리는 늘 피해 감
 	if d.get("locked", false):
 		nav_blocks.append(rect)
 	var door := {"type": type, "closed": closed, "leaf": leaf, "axis": axis, "body": body, "leaf_body": leaf_body,
 		"rect": rect, "leaf_rect": leaf_rect, "center": rect.get_center(), "locked": d.get("locked", false),
-		"tween": null}
+		"manual": d.get("manual", false), "tween": null}
 	doors.append(door)
 	_set_door(door, d.get("open", false), false)
 
@@ -394,7 +394,8 @@ func _set_door(door: Dictionary, open: bool, animate := true) -> void:
 			leaf.modulate.a = alpha
 	(door["body"].get_child(0) as CollisionShape2D).set_deferred("disabled", open)
 	if door["leaf_body"].get_child_count() > 0:
-		(door["leaf_body"].get_child(0) as CollisionShape2D).set_deferred("disabled", not open)
+		# 자동문의 열린 문짝은 그림만 (벽에 붙은 문짝에 몸이 걸리지 않게)
+		(door["leaf_body"].get_child(0) as CollisionShape2D).set_deferred("disabled", not open or _is_auto(door))
 
 
 ## 발 상자(feet)와 가까운 문을 열고 닫는다. 잠긴 문이면 "locked", 아무 문도 없으면 ""
@@ -402,11 +403,72 @@ func _set_door(door: Dictionary, open: bool, animate := true) -> void:
 ## 밀어낼 거리를 door_push에 담아 돌려줌 (부르는 쪽에서 인물을 그만큼 옮김). 문 자리 한가운데면 닫지 않음
 var door_push := Vector2.ZERO
 
+# ── 자동문: 누가(서하·NPC) 문 가까이 오면 저절로 열리고, 모두 멀어지면 닫힘 ──
+# 열린 문짝은 그림만 있고 몸에 걸리지 않음. 잠긴 문과 data의 "manual": true 문은 예전처럼 E로
+const AUTO_DOORS := true
+const AUTO_OPEN_GAP := 0.7 * TILE      # 발 상자와 문 자리 사이가 이만큼 가까워지면 엶
+const AUTO_CLOSE_GAP := 1.3 * TILE     # 모두 이만큼 멀어지면 닫음 (사이 구간은 그대로 → 깜빡임 방지)
+
+
+func _is_auto(door: Dictionary) -> bool:
+	return AUTO_DOORS and not door["locked"] and not door.get("manual", false)
+
+
+## 문틀 모서리에 걸렸을 때: 문을 향해 걷는 중이면 문 가운데 쪽으로 옆걸음 시켜 자연스럽게 빠져들어 가게
+func _door_slide(dir: Vector2, delta: float) -> void:
+	var f := feet_rect()
+	for door in doors:
+		if not door["open"]:
+			continue
+		var r: Rect2 = door["rect"]
+		if _rect_gap(r, f) > 0.6 * TILE:
+			continue
+		var c := r.get_center()
+		if door["type"] == "v" and absf(dir.x) > 0.5 and absf(dir.y) < 0.5:
+			var dy := c.y - (f.get_center().y)
+			if absf(dy) > 2.0:
+				player.move_and_collide(Vector2(0, signf(dy) * minf(absf(dy), SPEED * delta)))
+			return
+		if door["type"] != "v" and absf(dir.y) > 0.5 and absf(dir.x) < 0.5:
+			var dx := c.x - f.get_center().x
+			if absf(dx) > 2.0:
+				player.move_and_collide(Vector2(signf(dx) * minf(absf(dx), SPEED * delta), 0))
+			return
+
+
+func _feet_of(body: Node2D) -> Rect2:
+	return Rect2(body.position + Vector2(-28, -20), Vector2(56, 20))
+
+
+func _update_auto_doors() -> void:
+	var feet: Array[Rect2] = []
+	if player:
+		feet.append(feet_rect())
+	for npc in npcs:
+		if npc.visible and npc.process_mode != Node.PROCESS_MODE_DISABLED:
+			feet.append(_feet_of(npc))
+	for door in doors:
+		if not _is_auto(door):
+			continue
+		var r: Rect2 = door["rect"]
+		var lr: Rect2 = door["leaf_rect"]
+		var near := INF
+		var inside := false
+		for f in feet:
+			near = minf(near, _rect_gap(r, f))
+			inside = inside or f.intersects(r) or (lr.has_area() and f.intersects(lr))
+		if not door["open"] and near <= AUTO_OPEN_GAP:
+			_set_door(door, true)
+		elif door["open"] and near >= AUTO_CLOSE_GAP and not inside:
+			_set_door(door, false)
+
 func toggle_door_near(feet: Rect2) -> String:
 	door_push = Vector2.ZERO
 	var best: Dictionary = {}
 	var best_d := 2.4 * TILE
 	for door in doors:
+		if _is_auto(door):
+			continue   # 자동문은 E로 여닫지 않음
 		var r: Rect2 = door["rect"]
 		var dist: float = r.get_center().distance_to(feet.get_center())
 		dist = minf(dist, _rect_gap(r, feet) + TILE * 0.5)   # 긴 문(2칸)은 가장자리까지 거리도 봄
@@ -661,6 +723,7 @@ func feet_rect() -> Rect2:
 func _physics_process(_delta: float) -> void:
 	if player == null:
 		return
+	_update_auto_doors()
 	if _book:
 		player.velocity = Vector2.ZERO
 		avatar.walk(Vector2.ZERO)
@@ -674,6 +737,8 @@ func _physics_process(_delta: float) -> void:
 	var dir := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	player.velocity = dir * SPEED
 	player.move_and_slide()
+	if player.get_slide_collision_count() > 0:
+		_door_slide(dir, _delta)
 	avatar.walk(dir)
 
 
@@ -769,7 +834,7 @@ func _apply_time() -> void:
 
 
 func _update_info(note := "") -> void:
-	info.text = "[%s]%s  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · N 도윤 행동 · E 문·살펴보기 · B 읽은 그림책 페이지(개발용) · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
+	info.text = "[%s]%s  %s   %s · %s   안개 %d단계   확대 %d%%   %s\n방향키 걷기 · C 인물 바꾸기 · N 도윤 행동 · 문은 다가가면 자동 · E 살펴보기·잠긴 문 · B 읽은 그림책 페이지(개발용) · L 방 이름 · T 시간대 · V 조명 톤 · F 안개 · Z 확대 · G 격자 · Esc" % [
 		CHARACTERS[char_index][0], _npc_info(), data.get("name", ""), TONES[tone_index][0], TIMES[time_index], fog_index,
 		roundi(camera.zoom.x * 100), note]
 
