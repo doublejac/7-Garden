@@ -1,7 +1,7 @@
 # test_runner.gd
 # 헤드리스 자동 점검. 실행:
 #   godot --headless --path . res://tests/test_runner.tscn
-# 1) 1회차를 첫 번째·마지막 선택지로 각각 끝까지 돌려 일차별 평온도가 49/58/67/76인지 확인
+# 1) 1회차를 프롤로그부터 첫 번째·마지막 선택지로 각각 끝까지 돌려 일차별 평온도가 49/58/67/76인지 확인
 # 2) 2회차를 붉은 선택지 우선으로 돌려 오류 없이 끝나는지 확인
 # 3) 저장 → 값 변경 → 불러오기로 상태가 복원되는지 확인
 #
@@ -58,7 +58,7 @@ func _play_loop(loop: int, strategy: String, check_peace: bool) -> void:
 	runner.line_shown.connect(func(_l): state.lines += 1)
 	runner.choices_shown.connect(func(c): state.pending = c)
 	runner.day_finished.connect(func(_d): state.done = true)
-	for day in range(1, LAST_DAY + 1):
+	for day in range(0, LAST_DAY + 1):   # 0 = 프롤로그 (수치 변화 없음)
 		GameState.day = day
 		_check(runner.load_day(day), "%d일 차 파일 로드" % day)
 		state.done = false
@@ -82,7 +82,7 @@ func _play_loop(loop: int, strategy: String, check_peace: bool) -> void:
 			else:
 				runner.next()
 		_check(state.done, "%d회차 %d일 차가 끝까지 진행됨 (%s)" % [loop, day, strategy])
-		if check_peace:
+		if check_peace and day > 0:
 			_check(GameState.peace == EXPECTED_LOOP1_PEACE[day],
 				"%d회차 %d일 차 종료 평온도 %d (기대값 %d, %s)" % [loop, day, GameState.peace, EXPECTED_LOOP1_PEACE[day], strategy])
 	_out("  %d회차 [%s] 대사 %d줄, 선택 %d번 → 평온도 %d 의심도 %d 자아 %d 약 거부 %d" % [

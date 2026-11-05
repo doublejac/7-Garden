@@ -50,7 +50,7 @@ func _ready() -> void:
 func _start_new(loop: int) -> void:
 	GameState.reset_run(SaveManager.meta.inner_text)
 	GameState.loop = loop
-	_begin_day(1, true)
+	_begin_day(0, true)   # 0일 차 = 프롤로그 (백화증 안내 → 진료실 → 차 안 → 해무장 입구), 끝나면 1일 차
 
 
 func _continue_from(slot: int) -> void:
@@ -72,12 +72,16 @@ func _begin_day(day: int, play_now: bool) -> void:
 	_menu.hide()
 	_box.show()
 	if not runner.load_day(day):
-		_show_message("%d일 차 대사 파일이 아직 없습니다." % day)
+		_show_message("%s 대사 파일이 아직 없습니다." % _day_name(day))
 		return
 	if play_now:
 		SaveManager.autosave_day_start()
 		runner.next()
 	_refresh_debug()
+
+
+func _day_name(day: int) -> String:
+	return "프롤로그" if day == 0 else "%d일 차" % day
 
 
 func _on_day_finished(day: int) -> void:
@@ -185,8 +189,8 @@ func _apply_day_fx() -> void:
 
 
 func _refresh_debug() -> void:
-	_debug.text = "%d회차 %d일 차  |  평온도 %d  의심도 %d  자아 %d  약 거부 %d  |  %s" % [
-		GameState.loop, GameState.day, GameState.peace, GameState.suspicion,
+	_debug.text = "%d회차 %s  |  평온도 %d  의심도 %d  자아 %d  약 거부 %d  |  %s" % [
+		GameState.loop, _day_name(GameState.day), GameState.peace, GameState.suspicion,
 		GameState.clarity, GameState.pills_skipped, GameState.scene_id]
 
 
@@ -349,7 +353,7 @@ func _show_title() -> void:
 	_menu_button("새로 시작 (1회차)", _start_new.bind(1))
 	if SaveManager.has_slot(SaveManager.AUTO_SLOT):
 		var info := SaveManager.slot_info(SaveManager.AUTO_SLOT)
-		_menu_button("이어하기 (%d회차 %d일 차)" % [info.loop, info.day], _continue_from.bind(SaveManager.AUTO_SLOT))
+		_menu_button("이어하기 (%d회차 %s)" % [info.loop, _day_name(info.day)], _continue_from.bind(SaveManager.AUTO_SLOT))
 
 	# 개발용 버튼: 작게 2열로 모아서 화면 밖으로 넘치지 않게
 	var dev_label := Label.new()
